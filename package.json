@@ -1,0 +1,11 @@
+{
+  "name": "dframework-node",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "got": "^11.8.2",
+    "tough-cookie": "^4.0.0"
+  }
+}
