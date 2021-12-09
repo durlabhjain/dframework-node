@@ -4,6 +4,9 @@
   "main": "index.js",
   "license": "MIT",
   "type": "module",
+  "scripts": {
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
+  },
   "dependencies": {
     "@azure/identity": "^2.0.1",
     "@azure/storage-blob": "^12.8.0",
@@ -12,5 +15,9 @@
     "mssql": "^7.2.1",
     "prompt": "^1.2.0",
     "tough-cookie": "^4.0.0"
+  },
+  "devDependencies": {
+    "dotenv": "^10.0.0",
+    "jest": "^27.4.3"
   }
 }
