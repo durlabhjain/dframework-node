@@ -1,2 +1,4 @@
 .dccache
 node_modules
+.env
+/coverage
