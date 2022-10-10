@@ -142,3 +142,52 @@ const elasticResults = await framework.elastic.aggregate({
 ```
 
 // TODO: Explain parameters
+
+### Logging
+
+#### Configuration
+1. Need to create config.json file on root of the project, which can be override with all config with local file like config.local.json
+2. Configuration in the JSON file which has all default values which can change accordingly
+```
+{
+     "logging": {
+        "otherConfig": {
+            "stdout": true,
+            "httpConfig": {
+                "url": "http://xyz.com/error_post",
+                "headers": {}
+            },
+            postLevel: "error",
+            stdout: true,
+            logLevel: 'debug',
+            logFolder: './logs',
+            mixin: null,
+        },
+        "prettyPrint": {
+            translateTime: 'SYS:yyyy-mm-dd h:MM:ss',
+            ignore: '',
+            colorize: true,
+            singleLine: false,
+            levelFirst: false,
+        },
+        "file": {
+            frequency: '24h',
+            verbose: false,
+            max_logs: '10d',
+            date_format: 'YYYY-MM-DD',
+            size: '1m',
+        }
+    }
+}
+```
+
+#### Example
+
+```
+import { logger } from '@durlabh/dframework';
+
+logger.info("info");
+logger.debug("debug");
+logger.error("error");
+logger.trace("trace");
+```
