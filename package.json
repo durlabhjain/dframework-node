@@ -18,6 +18,7 @@
     "pino-multi-stream": "^6.0.0",
     "pino-pretty": "^9.1.1",
     "prompt": "^1.2.0",
+    "semver": "^7.3.8",
     "tough-cookie": "^4.0.0"
   },
   "devDependencies": {
