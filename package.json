@@ -8,21 +8,21 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "dependencies": {
-    "@azure/identity": "^2.0.1",
+    "@azure/identity": "^3.2.3",
     "@azure/storage-blob": "^12.8.0",
-    "file-stream-rotator": "^0.6.1",
-    "fs-extra": "^10.0.0",
-    "got": "^12.5.2",
-    "mssql": "^7.2.1",
+    "file-stream-rotator": "^1.0.0",
+    "fs-extra": "^11.1.1",
+    "got": "^13.0.0",
+    "mssql": "^9.1.1",
     "pino-http-send": "^0.4.2",
     "pino-multi-stream": "^6.0.0",
-    "pino-pretty": "^9.1.1",
+    "pino-pretty": "^10.0.0",
     "prompt": "^1.2.0",
     "semver": "^7.3.8",
     "tough-cookie": "^4.0.0"
   },
   "devDependencies": {
-    "dotenv": "^10.0.0",
-    "jest": "^27.4.3"
+    "dotenv": "^16.3.1",
+    "jest": "^29.5.0"
   }
 }
