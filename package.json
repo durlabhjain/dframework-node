@@ -23,6 +23,10 @@
   },
   "devDependencies": {
     "dotenv": "^16.3.1",
+    "mssql": "^9.1.1",
+    "file-stream-rotator": "^1.0.0",
+    "pino-multi-stream": "^6.0.0",
+    "pino-http-send": "^0.4.2",
     "jest": "^29.5.0"
   }
 }
