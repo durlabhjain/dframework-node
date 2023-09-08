@@ -171,12 +171,14 @@ const elasticResults = await framework.elastic.aggregate({
             levelFirst: false,
         },
         "file": {
-            frequency: '24h',
+            frequency: 'daily',
             verbose: false,
             max_logs: '10d',
             date_format: 'YYYY-MM-DD',
             size: '1m',
-        }
+            extension: ".log"
+        },
+        "customLevels" : { custom: 35 }
     }
 }
 ```
