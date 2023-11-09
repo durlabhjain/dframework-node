@@ -36,7 +36,7 @@ test('basicAuth', async () => {
         username: process.env.BASIC_USERNAME,
         password: process.env.BASIC_PASSWORD
     });
-    
+
     const result = await util.request({
         authentication: basicAuth,
         method: 'POST',
