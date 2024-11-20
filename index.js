@@ -13,6 +13,7 @@ import { sqlErrorMapper } from './lib/business/error-mapper.mjs';
 import BusinessBase from './lib/business/business-base.mjs';
 import responseTransformer from './lib/middleware/response-transformer.mjs';
 import ElasticBusinessBase from './lib/business/elastic-business-base.mjs';
+import RoleModule from './lib/business/roleModule.mjs';
 export default Framework;
 
-export { mssql, mysql, Azure, util, httpAuth, Elastic, adapters, logger, appConfig, lookup, sqlErrorMapper, BusinessBase, responseTransformer, ElasticBusinessBase };
+export { mssql, mysql, Azure, util, httpAuth, Elastic, adapters, logger, appConfig, lookup, sqlErrorMapper, BusinessBase, responseTransformer, ElasticBusinessBase,RoleModule };
