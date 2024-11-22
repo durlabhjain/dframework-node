@@ -193,3 +193,23 @@ logger.debug("debug");
 logger.error("error");
 logger.trace("trace");
 ```
+
+## Business object columns
+
+### `multiSelectColumns` Documentation
+
+The `multiSelectColumns` object is used to define configurations for columns that support multi-select functionality in on the UI side. 
+It brings the multiple values as CSV string. 
+``**references - business-base.mjs ``
+
+#### Structure
+
+```json
+{
+  "ManufacturerAlias": {
+    "tableName": "ManufacturerAlias",
+    "foreignKey": "ManufacturerAlias",
+    "typeOfForeignKey": "string"
+  }
+}
+```
