@@ -207,8 +207,8 @@ It brings the multiple values as CSV string.
 ```json
 {
   "ManufacturerAlias": {
-    "tableName": "ManufacturerAlias",
-    "foreignKey": "ManufacturerAlias",
+    "tableName": "Securtity_ManufacturerAlias",
+    "foreignKey": "AliasName",
     "typeOfForeignKey": "string"
   }
 }
