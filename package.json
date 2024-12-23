@@ -10,6 +10,7 @@
   "peerDependencies": {
     "@azure/identity": "^3.2.3",
     "@azure/storage-blob": "^12.23.0",
+    "bcrypt": "^5.1.1",
     "dayjs": "^1.11.11",
     "dotenv": "^16.3.1",
     "exceljs": "^4.4.0",
