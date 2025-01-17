@@ -30,7 +30,8 @@
     "pino-pretty": "^11.2.2",
     "prompt": "^1.2.0",
     "semver": "^7.3.8",
-    "tough-cookie": "^4.0.0"
+    "tough-cookie": "^4.0.0",
+    "@azure/msal-node": "^2.16.2"
   },
   "devDependencies": {
     "@azure/identity": "^3.2.3",
@@ -54,6 +55,7 @@
     "pino-pretty": "^11.2.2",
     "prompt": "^1.2.0",
     "semver": "^7.3.8",
-    "tough-cookie": "^4.0.0"
+    "tough-cookie": "^4.0.0",
+    "@azure/msal-node": "^2.16.2"
   }
 }
