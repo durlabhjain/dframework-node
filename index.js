@@ -17,6 +17,8 @@ import BusinessBaseRouter from './lib/business/business-objects.mjs';
 import responseTransformer from './lib/middleware/response-transformer.mjs';
 import ElasticBusinessBase from './lib/business/elastic-business-base.mjs';
 import RoleModule from './lib/business/roleModule.mjs';
+import aspxAuthMiddleWare from './lib/business/aspx-auth.mjs';
+
 export default Framework;
 
-export { mssql, mysql, Azure, util, httpAuth, Elastic, adapters, logger, appConfig, lookup, sqlErrorMapper, BusinessBase, responseTransformer, ElasticBusinessBase, RoleModule, BusinessBaseRouter, User, Auth };
+export { mssql, mysql, Azure, util, httpAuth, Elastic, adapters, logger, appConfig, lookup, sqlErrorMapper, BusinessBase, responseTransformer, ElasticBusinessBase, RoleModule, BusinessBaseRouter, User, Auth, aspxAuthMiddleWare };

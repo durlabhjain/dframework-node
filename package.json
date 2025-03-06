@@ -9,7 +9,9 @@
   },
   "peerDependencies": {
     "@azure/identity": "^3.2.3",
+    "@azure/msal-node": "^2.16.2",
     "@azure/storage-blob": "^12.23.0",
+    "aspxauth": "https://github.com/durlabhjain/aspxauth",
     "bcrypt": "^5.1.1",
     "dayjs": "^1.11.11",
     "dotenv": "^16.3.1",
@@ -30,12 +32,13 @@
     "pino-pretty": "^11.2.2",
     "prompt": "^1.2.0",
     "semver": "^7.3.8",
-    "tough-cookie": "^4.0.0",
-    "@azure/msal-node": "^2.16.2"
+    "tough-cookie": "^4.0.0"
   },
   "devDependencies": {
     "@azure/identity": "^3.2.3",
+    "@azure/msal-node": "^2.16.2",
     "@azure/storage-blob": "^12.23.0",
+    "aspxauth": "https://github.com/durlabhjain/aspxauth",
     "dayjs": "^1.11.11",
     "dotenv": "^16.3.1",
     "exceljs": "^4.4.0",
@@ -55,7 +58,6 @@
     "pino-pretty": "^11.2.2",
     "prompt": "^1.2.0",
     "semver": "^7.3.8",
-    "tough-cookie": "^4.0.0",
-    "@azure/msal-node": "^2.16.2"
+    "tough-cookie": "^4.0.0"
   }
 }
