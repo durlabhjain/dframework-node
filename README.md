@@ -206,10 +206,28 @@ It brings the multiple values as CSV string.
 
 ```json
 {
-  "ManufacturerAlias": {
-    "tableName": "Securtity_ManufacturerAlias",
-    "foreignKey": "AliasName",
-    "typeOfForeignKey": "string"
+  "Alias": {}  // Uses all defaults
+}
+```
+
+This is equivalent to:
+```json
+{
+  "Alias": {
+    "table": "ManufacturerAlias",  // Defaults to ParentTable + Key
+    "column": "Alias",            // Defaults to Key
+    "type": "string"             // Defaults to "string"
+  }
+}
+```
+
+You can override any of these defaults by specifying them in the configuration:
+```json
+{
+  "Alias": {
+    "table": "CustomTable",     // Override default table name
+    "column": "CustomColumn",   // Override default column name
+    "type": "number"           // Override default type
   }
 }
 ```
