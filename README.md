@@ -193,3 +193,41 @@ logger.debug("debug");
 logger.error("error");
 logger.trace("trace");
 ```
+
+## Business object columns
+
+### `multiSelectColumns` Documentation
+
+The `multiSelectColumns` object is used to define configurations for columns that support multi-select functionality in on the UI side. 
+It brings the multiple values as CSV string. 
+``**references - business-base.mjs ``
+
+#### Structure
+
+```json
+{
+  "Alias": {}  // Uses all defaults
+}
+```
+
+This is equivalent to:
+```json
+{
+  "Alias": {
+    "table": "ManufacturerAlias",  // Defaults to ParentTable + Key
+    "column": "Alias",            // Defaults to Key
+    "type": "string"             // Defaults to "string"
+  }
+}
+```
+
+You can override any of these defaults by specifying them in the configuration:
+```json
+{
+  "Alias": {
+    "table": "CustomTable",     // Override default table name
+    "column": "CustomColumn",   // Override default column name
+    "type": "number"           // Override default type
+  }
+}
+```
