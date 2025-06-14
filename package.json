@@ -57,5 +57,52 @@
     "semver": "^7.3.8",
     "tough-cookie": "^4.0.0",
     "@azure/msal-node": "^2.16.2"
+  },
+  "peerDependenciesMeta": {
+    "@azure/identity": {
+      "optional": true
+    },
+    "@azure/storage-blob": {
+      "optional": true
+    },
+    "bcrypt": {
+      "optional": true
+    },
+    "dotenv": {
+      "optional": true
+    },
+    "got": {
+      "optional": true
+    },
+    "jest": {
+      "optional": true
+    },
+    "js2xmlparser": {
+      "optional": true
+    },
+    "ldapjs": {
+      "optional": true
+    },
+    "mssql": {
+      "optional": true
+    },
+    "mysql2": {
+      "optional": true
+    },
+    "objects-to-csv": {
+      "optional": true
+    },
+    "prompt": {
+      "optional": true
+    },
+    "semver": {
+      "optional": true
+    },
+    "tough-cookie": {
+      "optional": true
+    },
+    "@azure/msal-node": {
+      "optional": true
+    }
   }
 }
