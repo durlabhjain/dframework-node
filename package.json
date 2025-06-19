@@ -1,6 +1,6 @@
 {
   "name": "@durlabh/dframework",
-  "version": "1.0.30",
+  "version": "1.0.31",
   "main": "index.js",
   "license": "MIT",
   "type": "module",
