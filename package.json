@@ -1,6 +1,6 @@
 {
   "name": "@durlabh/dframework",
-  "version": "1.0.30",
+  "version": "1.0.31",
   "main": "index.js",
   "license": "MIT",
   "type": "module",
@@ -10,7 +10,6 @@
   "peerDependencies": {
     "@azure/identity": "^3.2.3",
     "@azure/storage-blob": "^12.23.0",
-    "bcrypt": "^5.1.1",
     "dayjs": "^1.11.11",
     "dotenv": "^16.3.1",
     "exceljs": "^4.4.0",
@@ -27,7 +26,7 @@
     "pino": "^9.3.2",
     "pino-abstract-transport": "^1.2.0",
     "pino-multi-stream": "^6.0.0",
-    "pino-pretty": "^11.2.2",
+    "pino-pretty": "^13.0.0",
     "prompt": "^1.2.0",
     "semver": "^7.3.8",
     "tough-cookie": "^4.0.0",
@@ -52,10 +51,53 @@
     "pino": "^9.3.2",
     "pino-abstract-transport": "^1.2.0",
     "pino-multi-stream": "^6.0.0",
-    "pino-pretty": "^11.2.2",
+    "pino-pretty": "^13.0.0",
     "prompt": "^1.2.0",
-    "semver": "^7.3.8",
     "tough-cookie": "^4.0.0",
     "@azure/msal-node": "^2.16.2"
+  },
+  "peerDependenciesMeta": {
+    "@azure/identity": {
+      "optional": true
+    },
+    "@azure/storage-blob": {
+      "optional": true
+    },
+    "dotenv": {
+      "optional": true
+    },
+    "got": {
+      "optional": true
+    },
+    "jest": {
+      "optional": true
+    },
+    "js2xmlparser": {
+      "optional": true
+    },
+    "ldapjs": {
+      "optional": true
+    },
+    "mssql": {
+      "optional": true
+    },
+    "mysql2": {
+      "optional": true
+    },
+    "objects-to-csv": {
+      "optional": true
+    },
+    "prompt": {
+      "optional": true
+    },
+    "semver": {
+      "optional": true
+    },
+    "tough-cookie": {
+      "optional": true
+    },
+    "@azure/msal-node": {
+      "optional": true
+    }
   }
 }
