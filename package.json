@@ -7,6 +7,26 @@
   "scripts": {
     "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
+  "exports": {
+    ".": "./index.js",
+    "./mssql": "./lib/wrappers/mssql.js",
+    "./mysql": "./lib/wrappers/mysql.js",
+    "./Framework": "./lib/index.js",
+    "./logger": "./lib/logger.js",
+    "./util": "./lib/util.js",
+    "./http-auth": "./lib/http-auth/index.js",
+    "./adapters": "./lib/adapters/index.js",
+    "./appConfig": "./lib/appConfig.mjs",
+    "./business/lookup": "./lib/business/lookup.mjs",
+    "./business/error-mapper": "./lib/business/error-mapper.mjs",
+    "./business/business-base": "./lib/business/business-base.mjs",
+    "./business/auth": "./lib/business/auth.mjs",
+    "./business/business-objects": "./lib/business/business-objects.mjs",
+    "./middleware/response-transformer": "./lib/middleware/response-transformer.mjs",
+    "./business/elastic-business-base": "./lib/business/elastic-business-base.mjs",
+    "./azure": "./lib/azure.js",
+    "./elastic": "./lib/elastic.js"
+  },
   "peerDependencies": {
     "@azure/identity": "^3.2.3",
     "@azure/storage-blob": "^12.23.0",
