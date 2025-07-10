@@ -28,6 +28,8 @@
     "./elastic": "./lib/elastic.js"
   },
   "peerDependencies": {
+    "@azure/identity": "^3.2.3",
+    "@azure/storage-blob": "^12.23.0",
     "dayjs": "^1.11.11",
     "dotenv": "^16.3.1",
     "exceljs": "^4.4.0",
