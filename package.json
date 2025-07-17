@@ -4,9 +4,6 @@
   "main": "index.js",
   "license": "MIT",
   "type": "module",
-  "scripts": {
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
-  },
   "exports": {
     ".": "./index.js",
     "./mssql": "./lib/wrappers/mssql.js",
@@ -34,10 +31,9 @@
     "dayjs": "^1.11.13",
     "exceljs": "^4.4.0",
     "file-stream-rotator": "^1.0.0",
-    "form-data": "^4.0.3",
+    "form-data": "^4.0.4",
     "fs-extra": "^11.3.0",
     "got": "^14.4.7",
-    "jest": "^29.5.0",
     "js2xmlparser": "^5.0.0",
     "ldapjs": "^3.0.7",
     "mssql": "^11.0.1",
@@ -58,10 +54,9 @@
     "dayjs": "^1.11.13",
     "exceljs": "^4.4.0",
     "file-stream-rotator": "^1.0.0",
-    "form-data": "^4.0.3",
+    "form-data": "^4.0.4",
     "fs-extra": "^11.3.0",
     "got": "^14.4.7",
-    "jest": "^29.5.0",
     "js2xmlparser": "^5.0.0",
     "ldapjs": "^3.0.7",
     "mssql": "^11.0.1",
@@ -82,9 +77,6 @@
       "optional": true
     },
     "got": {
-      "optional": true
-    },
-    "jest": {
       "optional": true
     },
     "js2xmlparser": {
