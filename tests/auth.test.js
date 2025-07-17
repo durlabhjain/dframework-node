@@ -1,4 +1,3 @@
-import { } from 'dotenv/config';
 import { util, httpAuth } from '../index.js';
 import { Buffer } from 'buffer';
 
