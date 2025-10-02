@@ -2,6 +2,18 @@
 
 This library is to facilate using Spraxa's DFramework related applications via NodeJS
 
+## Documentation
+
+- [API Reference](docs/API_REFERENCE.md) - Complete reference for business objects, filtering, and multi-select columns
+- [Usage Patterns](docs/USAGE_PATTERNS.md) - Comprehensive guide with common usage patterns and examples
+- [Database Configuration](docs/DATABASE_CONFIGURATION.md) - Connection pooling, best practices, and configuration examples
+- [Batch Operations](docs/BATCH_OPERATIONS.md) - Efficient batch INSERT, UPDATE, DELETE operations with examples
+- [ElasticSearch Queries](docs/ELASTICSEARCH_QUERIES.md) - SQL and Search API queries with pagination and memory optimization
+- [New Exports](docs/NEW_EXPORTS.md) - Documentation on newly available exports
+- [SQL Logging](docs/SQL_LOGGING.md) - Request-specific logging for SQL operations
+- [Examples](docs/examples/) - Working examples demonstrating framework features
+- [TODO](TODO.md) - Comprehensive list of improvements and future enhancements
+
 # Available Exports
 
 The library exports several utility classes and modules that can be used in your applications:
@@ -137,7 +149,60 @@ const { recordset: activeUsers } = await framework.sql.query(`
 
 ### Join
 
-// TODO
+The framework supports SQL joins through the business object's selectStatement property:
+
+```javascript
+class UserBusiness extends BusinessBase {
+    tableName = 'Users';
+    keyField = 'UserId';
+    
+    // Define a custom select statement with joins
+    selectStatement = `
+        SELECT 
+            u.*, 
+            r.RoleName,
+            d.DepartmentName
+        FROM Users u
+        LEFT JOIN Roles r ON u.RoleId = r.RoleId
+        LEFT JOIN Departments d ON u.DepartmentId = d.DepartmentId
+    `;
+}
+```
+
+For dynamic joins based on parameters, override the `getSelectStatement` method:
+
+```javascript
+class UserBusiness extends BusinessBase {
+    tableName = 'Users';
+    keyField = 'UserId';
+    
+    getSelectStatement(alias = 'Main') {
+        let query = super.getSelectStatement(alias);
+        
+        // Add joins based on requirements
+        if (this.includeRoles) {
+            query += ` LEFT JOIN Roles r ON ${alias}.RoleId = r.RoleId`;
+        }
+        
+        if (this.includeDepartments) {
+            query += ` LEFT JOIN Departments d ON ${alias}.DepartmentId = d.DepartmentId`;
+        }
+        
+        return query;
+    }
+}
+
+// Usage
+const userBusiness = new UserBusiness();
+userBusiness.includeRoles = true;
+userBusiness.includeDepartments = true;
+const users = await userBusiness.list({ start: 0, limit: 50 });
+```
+
+**Important Notes:**
+- Ensure column names don't conflict when using joins
+- Use table aliases to avoid ambiguity
+- The framework automatically handles WHERE clauses and filters
 
 
 
@@ -162,22 +227,130 @@ await framework.setElastic(elasticConfig);
 
 ### Querying
 
-```
+The `elastic.aggregate()` method performs aggregation queries on ElasticSearch indices.
+
+```javascript
 const elasticResults = await framework.elastic.aggregate({
-    query: 'myQuery',
-    customize: this.customizeElasticQuery,  // function to customize elastic query
-    mappings: {
+    query: 'myQuery',                        // Query name or query object
+    customize: this.customizeElasticQuery,   // Optional function to customize elastic query
+    mappings: {                              // Define how to map aggregation results
         "Items": {
-            root: "items",
+            root: "items",                   // Root path in the aggregation result
             map: {
-                "Transactions": "doc_count"
+                "Transactions": "doc_count"  // Map result fields to output fields
             }
         }
     }
 });
 ```
 
-// TODO: Explain parameters
+**Parameters:**
+
+- **query** (String|Object): Either a query name that will be loaded from a file, or a complete ElasticSearch query object
+- **customize** (Function, optional): A callback function to modify the query before execution. Receives the query object and should return the modified query
+- **mappings** (Object, optional): Defines how to transform the aggregation results into a structured format
+  - **root** (String): The path to navigate in the aggregation buckets (e.g., "items.buckets")
+  - **map** (Object): Key-value pairs mapping result field names to output field names
+
+**Example with Custom Query:**
+
+```javascript
+// Custom aggregation query
+const results = await framework.elastic.aggregate({
+    query: {
+        index: 'sales',
+        body: {
+            aggs: {
+                by_category: {
+                    terms: { field: 'category.keyword' },
+                    aggs: {
+                        total_sales: { sum: { field: 'amount' } }
+                    }
+                }
+            }
+        }
+    },
+    mappings: {
+        "Categories": {
+            root: "by_category.buckets",
+            map: {
+                "CategoryName": "key",
+                "TotalSales": "total_sales.value"
+            }
+        }
+    }
+});
+```
+
+**Example with Customize Function:**
+
+```javascript
+class SalesReport {
+    customizeElasticQuery(query) {
+        // Add date range filter
+        query.body.query = {
+            range: {
+                date: {
+                    gte: this.startDate,
+                    lte: this.endDate
+                }
+            }
+        };
+        return query;
+    }
+    
+    async generateReport() {
+        const results = await framework.elastic.aggregate({
+            query: 'salesByRegion',
+            customize: this.customizeElasticQuery.bind(this),
+            mappings: {
+                "Regions": {
+                    root: "regions.buckets",
+                    map: {
+                        "Region": "key",
+                        "Sales": "total.value"
+                    }
+                }
+            }
+        });
+        return results;
+    }
+}
+```
+
+**Using SQL Queries with ElasticSearch:**
+
+The framework also supports SQL-style queries via `elastic.sqlQuery()`:
+
+```javascript
+const results = await framework.elastic.sqlQuery({
+    indexName: 'products',
+    select: ['name', 'category'],
+    aggregates: ['Avg(price) AS avg_price', 'Count(*) AS total'],
+    groupBy: ['category'],
+    where: [
+        { field: 'status', value: 'active', operator: '=' },
+        { field: 'stock', value: 0, operator: '>' }
+    ],
+    limit: 100,
+    offset: 0,
+    sort: [['avg_price', 'DESC']]
+});
+```
+
+**SQL Query Parameters:**
+
+- **indexName** (String): ElasticSearch index name
+- **select** (Array): Fields to select
+- **aggregates** (Array): Aggregation expressions (e.g., "Avg(price) AS avg_price")
+- **groupBy** (Array): Fields to group by
+- **where** (Array): Filter conditions (each object has field, value, operator)
+- **limit** (Number, optional): Maximum number of results
+- **offset** (Number, optional): Number of results to skip (for pagination)
+- **sort** (Array, optional): Sort criteria as [field, direction] pairs
+- **returnAll** (Boolean, default: true): If false, use callback to process results incrementally
+- **callback** (Function, optional): Function to process each batch of results
+- **translateSqlRows** (Boolean, default: true): Convert rows to key-value format
 
 ### Logging
 
