@@ -4,3 +4,5 @@ node_modules
 /coverage
 .DS_Store
 package-lock.json
+logs/
+audit.json
