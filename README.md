@@ -2,6 +2,42 @@
 
 This library is to facilate using Spraxa's DFramework related applications via NodeJS
 
+# Available Exports
+
+The library exports several utility classes and modules that can be used in your applications:
+
+## Core Exports
+- `Framework` - Main framework class for Portal APIs
+- `Sql` - MSSQL database wrapper with common functionality
+- `MySql` - MySQL database wrapper with common functionality
+- `SqlHelper` - SQL utility functions for field validation and queries
+- `ListParameters` - Helper for constructing list request parameters
+- `reports` / `toExcel` - Report generation utilities (Excel, CSV, JSON, text)
+- `generateReport` - Express middleware for report generation
+- `enums` - Shared enums and constants
+
+## Business Layer
+- `BusinessBase` - Base class for business objects
+- `ElasticBusinessBase` - ElasticSearch-enabled business base
+- `BusinessBaseRouter` - Router for business objects
+- `Auth` - Authentication utilities
+- `lookup` - Lookup utilities
+- `sqlErrorMapper` - SQL error mapping
+
+## Infrastructure
+- `Azure` - Azure services integration
+- `Elastic` - ElasticSearch client
+- `logger` - Pino logger
+- `util` - Utility functions
+- `httpAuth` - HTTP authentication (Basic, Bearer)
+- `adapters` - HTTP client adapters
+- `appConfig` - Application configuration
+- `responseTransformer` - Express response transformer middleware
+- `mssql` - Direct access to mssql library types
+- `mysql` - Direct access to mysql2 library types
+
+See [NEW_EXPORTS.md](docs/NEW_EXPORTS.md) for detailed documentation on the newly available exports.
+
 # Usage
 
 ## Getting started

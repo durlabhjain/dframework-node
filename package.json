@@ -22,7 +22,14 @@
     "./middleware/response-transformer": "./lib/middleware/response-transformer.mjs",
     "./business/elastic-business-base": "./lib/business/elastic-business-base.mjs",
     "./azure": "./lib/azure.js",
-    "./elastic": "./lib/elastic.js"
+    "./elastic": "./lib/elastic.js",
+    "./sql": "./lib/sql.js",
+    "./mysql-class": "./lib/mysql.js",
+    "./business/sql-helper": "./lib/business/sql-helper.mjs",
+    "./list-parameters": "./lib/list-parameters.js",
+    "./reports": "./lib/reports.mjs",
+    "./business/query-base": "./lib/business/query-base.mjs",
+    "./enums": "./lib/enums.mjs"
   },
   "peerDependencies": {
     "@azure/identity": "^4.10.2",
