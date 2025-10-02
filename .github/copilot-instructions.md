@@ -215,12 +215,28 @@ When contributing or making changes:
 6. **Use proper imports**: Always use explicit file extensions
 7. **Handle optional dependencies**: Check if dependencies exist before use
 
+## Documentation
+
+The project has comprehensive documentation:
+
+- **[README.md](../README.md)**: Main documentation with getting started guide, API overview, and usage examples
+- **[USAGE_PATTERNS.md](../docs/USAGE_PATTERNS.md)**: 27+ usage patterns covering all major features with complete code examples
+- **[NEW_EXPORTS.md](../docs/NEW_EXPORTS.md)**: Documentation on the newly available exports and subpath imports
+- **[SQL_LOGGING.md](../docs/SQL_LOGGING.md)**: Flexible SQL logging for web requests with request context
+- **[TODO.md](../TODO.md)**: Comprehensive code review with prioritized improvements and enhancements
+- **[Examples](../docs/examples/)**: Working examples demonstrating framework features
+
+When making changes, ensure documentation stays up-to-date and consistent with the code.
+
 ## TODO Items in Codebase
 
-Several areas marked for future enhancement:
+See [TODO.md](../TODO.md) for a comprehensive list of improvements and future enhancements.
 
-- `README.md`: Explain ElasticSearch parameters
-- `README.md`: Document SQL JOIN functionality
+Previously completed items:
+- ✅ `README.md`: ElasticSearch parameters are now documented
+- ✅ `README.md`: SQL JOIN functionality is now documented
+
+Remaining areas marked for future enhancement:
 - `lib/reports.mjs`: Add handler improvements for JSON and text files
 
 When working on these, maintain consistency with existing patterns.
