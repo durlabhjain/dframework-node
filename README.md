@@ -4,6 +4,7 @@ This library is to facilate using Spraxa's DFramework related applications via N
 
 ## Documentation
 
+- [API Reference](docs/API_REFERENCE.md) - Complete reference for business objects, filtering, and multi-select columns
 - [Usage Patterns](docs/USAGE_PATTERNS.md) - Comprehensive guide with common usage patterns and examples
 - [Database Configuration](docs/DATABASE_CONFIGURATION.md) - Connection pooling, best practices, and configuration examples
 - [Batch Operations](docs/BATCH_OPERATIONS.md) - Efficient batch INSERT, UPDATE, DELETE operations with examples
