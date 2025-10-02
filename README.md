@@ -5,6 +5,9 @@ This library is to facilate using Spraxa's DFramework related applications via N
 ## Documentation
 
 - [Usage Patterns](docs/USAGE_PATTERNS.md) - Comprehensive guide with common usage patterns and examples
+- [Database Configuration](docs/DATABASE_CONFIGURATION.md) - Connection pooling, best practices, and configuration examples
+- [Batch Operations](docs/BATCH_OPERATIONS.md) - Efficient batch INSERT, UPDATE, DELETE operations with examples
+- [ElasticSearch Queries](docs/ELASTICSEARCH_QUERIES.md) - SQL and Search API queries with pagination and memory optimization
 - [New Exports](docs/NEW_EXPORTS.md) - Documentation on newly available exports
 - [SQL Logging](docs/SQL_LOGGING.md) - Request-specific logging for SQL operations
 - [Examples](docs/examples/) - Working examples demonstrating framework features
