@@ -1,6 +1,6 @@
 {
   "name": "@durlabh/dframework",
-  "version": "1.0.38",
+  "version": "1.0.39",
   "main": "index.js",
   "license": "MIT",
   "type": "module",
@@ -20,6 +20,7 @@
     "./business/auth": "./lib/business/auth.mjs",
     "./business/business-objects": "./lib/business/business-objects.mjs",
     "./middleware/response-transformer": "./lib/middleware/response-transformer.mjs",
+    "./middleware/slow-request-logger": "./lib/middleware/slow-request-logger.mjs",
     "./business/elastic-business-base": "./lib/business/elastic-business-base.mjs",
     "./azure": "./lib/azure.js",
     "./elastic": "./lib/elastic.js",
