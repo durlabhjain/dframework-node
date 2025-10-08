@@ -10,7 +10,7 @@ import logger from './lib/logger.js';
 import appConfig from './lib/appConfig.mjs';
 import lookup from './lib/business/lookup.mjs';
 import { sqlErrorMapper } from './lib/business/error-mapper.mjs';
-import {BusinessBase, RelationshipTypes, classMap, compareLookups} from './lib/business/business-base.mjs';
+import { BusinessBase, RelationshipTypes, classMap, compareLookups } from './lib/business/business-base.mjs';
 import Auth from './lib/business/auth.mjs';
 import BusinessBaseRouter from './lib/business/business-objects.mjs';
 import responseTransformer from './lib/middleware/response-transformer.mjs';
@@ -24,6 +24,8 @@ import generateReport from './lib/business/query-base.mjs';
 import enums from './lib/enums.mjs';
 import ConcatenatedColumn from './lib/concatenatedColumn.mjs';
 import { attachmentPath, readFiles, removeTempFile, upload } from './lib/middleware/attachment.mjs';
+import { auth as AspxAuth } from './lib/business/auth/aspxAuth.js';
+import BasicAuth from './lib/business/auth/basicAuth.mjs';
 
 
-export { Framework, mssql, mysql, Azure, util, httpAuth, Elastic, adapters, logger, appConfig, lookup, sqlErrorMapper, BusinessBase, responseTransformer, ElasticBusinessBase, BusinessBaseRouter, Auth, Sql, MySql, SqlHelper, ListParameters, reports, toExcel, render, generateReport, enums, ConcatenatedColumn, upload, removeTempFile, readFiles, attachmentPath, RelationshipTypes, classMap, compareLookups };
+export { Framework, mssql, mysql, Azure, util, httpAuth, Elastic, adapters, logger, appConfig, lookup, sqlErrorMapper, BusinessBase, responseTransformer, ElasticBusinessBase, BusinessBaseRouter, Auth, Sql, MySql, SqlHelper, ListParameters, reports, toExcel, render, generateReport, enums, ConcatenatedColumn, upload, removeTempFile, readFiles, attachmentPath, RelationshipTypes, classMap, compareLookups, AspxAuth, BasicAuth };
