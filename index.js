@@ -24,8 +24,8 @@ import generateReport from './lib/business/query-base.mjs';
 import enums from './lib/enums.mjs';
 import ConcatenatedColumn from './lib/concatenatedColumn.mjs';
 import { attachmentPath, readFiles, removeTempFile, upload } from './lib/middleware/attachment.mjs';
-import { User as AspxUser, auth as AspxAuth } from './lib/business/auth/aspxAuth.js';
+import AspxAuth from './lib/business/auth/aspxAuth.js';
 import BasicAuth from './lib/business/auth/basicAuth.mjs';
 
 
-export { Framework, mssql, mysql, Azure, util, httpAuth, Elastic, adapters, logger, appConfig, lookup, sqlErrorMapper, BusinessBase, responseTransformer, ElasticBusinessBase, BusinessBaseRouter, Auth, Sql, MySql, SqlHelper, ListParameters, reports, toExcel, render, generateReport, enums, ConcatenatedColumn, upload, removeTempFile, readFiles, attachmentPath, RelationshipTypes, classMap, compareLookups, AspxUser, AspxAuth, BasicAuth };
+export { Framework, mssql, mysql, Azure, util, httpAuth, Elastic, adapters, logger, appConfig, lookup, sqlErrorMapper, BusinessBase, responseTransformer, ElasticBusinessBase, BusinessBaseRouter, Auth, Sql, MySql, SqlHelper, ListParameters, reports, toExcel, render, generateReport, enums, ConcatenatedColumn, upload, removeTempFile, readFiles, attachmentPath, RelationshipTypes, classMap, compareLookups, AspxAuth, BasicAuth };
