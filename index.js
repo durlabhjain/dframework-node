@@ -10,7 +10,7 @@ import logger from './lib/logger.js';
 import appConfig from './lib/appConfig.mjs';
 import lookup from './lib/business/lookup.mjs';
 import { sqlErrorMapper } from './lib/business/error-mapper.mjs';
-import BusinessBase from './lib/business/business-base.mjs';
+import { classMap, RelationshipTypes, BusinessBase } from './lib/business/business-base.mjs';
 import Auth from './lib/business/auth.mjs';
 import BusinessBaseRouter from './lib/business/business-objects.mjs';
 import responseTransformer from './lib/middleware/response-transformer.mjs';
@@ -23,4 +23,4 @@ import { reports, toExcel } from './lib/reports.mjs';
 import generateReport from './lib/business/query-base.mjs';
 import enums from './lib/enums.mjs';
 
-export { Framework, mssql, mysql, Azure, util, httpAuth, Elastic, adapters, logger, appConfig, lookup, sqlErrorMapper, BusinessBase, responseTransformer, ElasticBusinessBase, BusinessBaseRouter, Auth, Sql, MySql, SqlHelper, ListParameters, reports, toExcel, generateReport, enums };
+export { Framework, mssql, mysql, Azure, util, httpAuth, Elastic, adapters, logger, appConfig, lookup, sqlErrorMapper, BusinessBase, responseTransformer, ElasticBusinessBase, BusinessBaseRouter, Auth, Sql, MySql, SqlHelper, ListParameters, reports, toExcel, generateReport, enums, classMap, RelationshipTypes };
