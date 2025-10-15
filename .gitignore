@@ -3,3 +3,6 @@ node_modules
 .env
 /coverage
 .DS_Store
+package-lock.json
+logs/
+audit.json
