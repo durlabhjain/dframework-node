@@ -4,6 +4,9 @@
  */
 
 import Sql from '../lib/sql.js';
+import enums from '../lib/enums.mjs';
+
+const { inOperatorStrategies } = enums;
 
 // Mock mssql module
 const mockMssql = {
@@ -66,7 +69,7 @@ console.log('');
 // Test 2: EXISTS strategy with non-TVP
 console.log('Test 2: EXISTS strategy with non-TVP');
 const sql2 = new Sql();
-sql2.inOperatorStrategy = 'exists';
+sql2.inOperatorStrategy = inOperatorStrategies.EXISTS;
 const request2 = createMockRequest();
 const result2 = sql2.in({
     request: request2,
@@ -83,7 +86,7 @@ console.log('');
 // Test 3: Traditional IN strategy
 console.log('Test 3: Traditional IN strategy');
 const sql3 = new Sql();
-sql3.inOperatorStrategy = 'in';
+sql3.inOperatorStrategy = inOperatorStrategies.IN;
 const request3 = createMockRequest();
 const result3 = sql3.in({
     request: request3,
@@ -100,7 +103,7 @@ console.log('');
 // Test 4: NOT IN with innerJoin strategy (should use NOT EXISTS)
 console.log('Test 4: NOT IN with innerJoin strategy');
 const sql4 = new Sql();
-sql4.inOperatorStrategy = 'innerJoin';
+sql4.inOperatorStrategy = inOperatorStrategies.INNER_JOIN;
 const request4 = createMockRequest();
 const result4 = sql4.in({
     request: request4,
@@ -144,7 +147,7 @@ console.log('');
 // Test 6: Override strategy parameter
 console.log('Test 6: Override strategy with parameter');
 const sql6 = new Sql();
-sql6.inOperatorStrategy = 'innerJoin'; // Default is innerJoin
+sql6.inOperatorStrategy = inOperatorStrategies.INNER_JOIN; // Default is innerJoin
 const request6 = createMockRequest();
 const result6 = sql6.in({
     request: request6,
@@ -152,7 +155,7 @@ const result6 = sql6.in({
     paramName: 'UserId',
     values: [1, 2, 3],
     sqlType: mockMssql.Int,
-    strategy: 'in' // Override to use traditional IN
+    strategy: inOperatorStrategies.IN // Override to use traditional IN
 });
 console.log('Statement:', result6.statement);
 console.log('Expected: Traditional IN despite default being innerJoin');
@@ -164,7 +167,7 @@ console.log('Test 7: setConfig should set inOperatorStrategy');
 const sql7 = new Sql();
 console.log('Default strategy:', sql7.inOperatorStrategy);
 console.log('Expected: innerJoin');
-console.log('Match:', sql7.inOperatorStrategy === 'innerJoin');
+console.log('Match:', sql7.inOperatorStrategy === inOperatorStrategies.INNER_JOIN);
 console.log('');
 
 // Test 8: Invalid strategy should throw error

@@ -152,16 +152,20 @@ const { recordset: activeUsers } = await framework.sql.query(`
 The framework provides three configurable strategies for IN operations to optimize query performance:
 
 ```javascript
+import { enums } from 'dframework-node';
+
+const { inOperatorStrategies } = enums;
+
 // Configure the default IN operator strategy during initialization
 await framework.setSql({
     /* database config */
-    inOperatorStrategy: 'innerJoin' // Options: 'innerJoin' (default), 'exists', 'in'
+    inOperatorStrategy: inOperatorStrategies.INNER_JOIN // Options: INNER_JOIN (default), EXISTS, IN
 });
 
 // The strategy affects how IN operations are executed:
-// 1. 'innerJoin': Uses INNER JOIN (fastest in most cases)
-// 2. 'exists': Uses EXISTS subquery (good for NOT IN scenarios)
-// 3. 'in': Traditional IN operator (backward compatible)
+// 1. INNER_JOIN: Uses INNER JOIN (fastest in most cases)
+// 2. EXISTS: Uses EXISTS subquery (good for NOT IN scenarios)
+// 3. IN: Traditional IN operator (backward compatible)
 
 // Override strategy for specific queries
 const users = await framework.sql.execute({
@@ -170,7 +174,7 @@ const users = await framework.sql.execute({
         UserId: {
             value: [1, 2, 3, 4, 5],
             operator: 'in',
-            inOperatorStrategy: 'exists' // Override default
+            inOperatorStrategy: inOperatorStrategies.EXISTS // Override default
         }
     }
 });
