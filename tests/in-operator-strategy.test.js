@@ -167,4 +167,26 @@ console.log('Expected: innerJoin');
 console.log('Match:', sql7.inOperatorStrategy === 'innerJoin');
 console.log('');
 
+// Test 8: Invalid strategy should throw error
+console.log('Test 8: Invalid strategy should throw error');
+const sql8 = new Sql();
+const request8 = createMockRequest();
+let errorThrown = false;
+try {
+    sql8.in({
+        request: request8,
+        fieldName: 'UserId',
+        paramName: 'UserId',
+        values: [1, 2, 3],
+        sqlType: mockMssql.Int,
+        strategy: 'invalid' // Invalid strategy
+    });
+} catch (err) {
+    errorThrown = true;
+    console.log('Error message:', err.message);
+}
+console.log('Expected: Error thrown for invalid strategy');
+console.log('Match:', errorThrown);
+console.log('');
+
 console.log('All tests completed!');
