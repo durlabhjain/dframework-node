@@ -133,6 +133,95 @@ if (filters.isActive !== undefined) {
 const result = await request.query(query);
 ```
 
+### Pattern 4a: IN Operator Optimization Strategies
+
+The framework provides three configurable strategies for IN operations to optimize query performance. The default strategy is `innerJoin` which typically performs better than traditional IN operators.
+
+```javascript
+import { Sql, mssql, enums } from '@durlabh/dframework';
+
+const { inOperatorStrategies } = enums;
+const sql = new Sql();
+
+// Configure the default IN operator strategy using enum
+await sql.setConfig({ 
+    /* database config */
+    inOperatorStrategy: inOperatorStrategies.INNER_JOIN // Options: INNER_JOIN, EXISTS, IN
+});
+
+// Example 1: Using default strategy (innerJoin)
+const request1 = sql.createRequest();
+const result1 = sql.in({
+    request: request1,
+    fieldName: 'UserId',
+    paramName: 'UserId',
+    values: [1, 2, 3, 4, 5]
+});
+// Generates: INNER JOIN (SELECT @UserId_0 AS Value UNION ALL ...) AS _tvp1 ON UserId = _tvp1.Value
+
+// Example 2: Override strategy for specific query (EXISTS)
+const request2 = sql.createRequest();
+const result2 = sql.in({
+    request: request2,
+    fieldName: 'ProductId',
+    paramName: 'ProductId',
+    values: [10, 20, 30],
+    strategy: inOperatorStrategies.EXISTS // Override default strategy
+});
+// Generates: EXISTS (SELECT 1 FROM (...) AS _tvp2 WHERE ProductId = _tvp2.Value)
+
+// Example 3: Traditional IN operator
+const request3 = sql.createRequest();
+const result3 = sql.in({
+    request: request3,
+    fieldName: 'CategoryId',
+    paramName: 'CategoryId',
+    values: [100, 200],
+    strategy: inOperatorStrategies.IN // Traditional IN operator
+});
+// Generates: CategoryId IN (@CategoryId_0, @CategoryId_1)
+
+// Example 4: Using with execute method and parameters
+const users = await sql.execute({
+    query: 'SELECT * FROM Users',
+    where: {
+        UserId: {
+            value: [1, 2, 3, 4, 5],
+            operator: 'in',
+            // Optional: override default strategy for this parameter
+            inOperatorStrategy: inOperatorStrategies.EXISTS
+        }
+    }
+});
+
+// Example 5: With Table-Valued Parameters (TVP)
+const request5 = sql.createRequest();
+const result5 = sql.in({
+    request: request5,
+    fieldName: 'OrderId',
+    paramName: 'OrderIds',
+    values: [1000, 2000, 3000],
+    useTvp: true,
+    tvpType: 'dbo.IntList',
+    tvpColumnName: 'Value'
+});
+// With innerJoin strategy:
+// INNER JOIN @OrderIds AS _tvp3 ON OrderId = _tvp3.Value
+
+// Strategy comparison:
+// 1. INNER_JOIN: Best for most cases, uses INNER JOIN for IN and NOT EXISTS for NOT IN
+//    - Pros: Often fastest, especially with proper indexes
+//    - Cons: Cannot be used in all query positions (e.g., SELECT clause)
+//
+// 2. EXISTS: Uses EXISTS/NOT EXISTS subqueries
+//    - Pros: Works in more query positions, good for NOT IN scenarios
+//    - Cons: May be slower than INNER JOIN in some cases
+//
+// 3. IN: Traditional IN operator
+//    - Pros: Simple, works everywhere, backward compatible
+//    - Cons: Often slower than INNER JOIN or EXISTS for large value lists
+```
+
 ## Business Objects
 
 ### Pattern 5: Basic Business Object
