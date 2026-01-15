@@ -112,10 +112,5 @@
     "@azure/msal-node": {
       "optional": true
     }
-  },
-  "overrides": {
-    "mysql2": {
-      "named-placeholders": "^1.1.6"
-    }
   }
 }
