@@ -4,9 +4,6 @@
   "main": "index.js",
   "license": "MIT",
   "type": "module",
-  "scripts": {
-    "postinstall": "patch-package"
-  },
   "exports": {
     ".": "./index.js",
     "./mssql": "./lib/wrappers/mssql.js",
@@ -71,7 +68,6 @@
     "mssql": "^12.2.0",
     "mysql2": "^3.16.0",
     "objects-to-csv": "^1.3.6",
-    "patch-package": "^8.0.1",
     "pino": "^10.1.1",
     "pino-abstract-transport": "^3.0.0",
     "pino-multi-stream": "^6.0.0",
@@ -115,6 +111,11 @@
     },
     "@azure/msal-node": {
       "optional": true
+    }
+  },
+  "overrides": {
+    "mysql2": {
+      "named-placeholders": "^1.1.6"
     }
   }
 }
