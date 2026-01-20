@@ -41,7 +41,6 @@
     "@azure/storage-blob": "^12.29.1",
     "dayjs": "^1.11.19",
     "exceljs": "^4.4.0",
-    "file-stream-rotator": "^1.0.0",
     "fs-extra": "^11.3.3",
     "got": "^14.6.6",
     "js2xmlparser": "^5.0.0",
@@ -63,7 +62,6 @@
     "@azure/storage-blob": "^12.29.1",
     "dayjs": "^1.11.19",
     "exceljs": "^4.4.0",
-    "file-stream-rotator": "^1.0.0",
     "fs-extra": "^11.3.3",
     "got": "^14.6.6",
     "js2xmlparser": "^5.0.0",
@@ -84,9 +82,6 @@
       "optional": true
     },
     "@azure/storage-blob": {
-      "optional": true
-    },
-    "file-stream-rotator": {
       "optional": true
     },
     "got": {
