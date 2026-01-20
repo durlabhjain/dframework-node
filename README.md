@@ -11,6 +11,7 @@ This library is to facilate using Spraxa's DFramework related applications via N
 - [ElasticSearch Queries](docs/ELASTICSEARCH_QUERIES.md) - SQL and Search API queries with pagination and memory optimization
 - [New Exports](docs/NEW_EXPORTS.md) - Documentation on newly available exports
 - [SQL Logging](docs/SQL_LOGGING.md) - Request-specific logging for SQL operations
+- [Logger Migration](docs/LOGGER_MIGRATION.md) - Migration guide for the modernized logging system
 - [Examples](docs/examples/) - Working examples demonstrating framework features
 - [TODO](TODO.md) - Comprehensive list of improvements and future enhancements
 
