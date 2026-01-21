@@ -520,8 +520,8 @@ For maximum performance in production:
 If upgrading from a version using `file-stream-rotator`:
 - The new implementation uses `pino-roll` for better performance and reliability
 - Configuration option `max_logs` is replaced by `limit: { count: N }`
-- Date format is now fixed at 'yyyy-MM-dd' for consistency
-- `verbose` and `date_format` options are removed
+- Default date format is now 'yyyy-MM-dd' for consistency across all log files
+- `verbose` option is removed; the former `date_format` option has been superseded by `dateFormat` (the legacy `date_format` name may still be accepted for backward compatibility but is deprecated)
 - All other options remain backward compatible
 
 ## Business object columns
