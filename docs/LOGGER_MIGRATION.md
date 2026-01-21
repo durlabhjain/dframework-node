@@ -9,8 +9,7 @@ This document describes the changes made to modernize the logging system from `f
 ### 1. Dependencies
 - **Added**: `pino-roll@^4.0.0` - Modern file rotation transport
 - **Removed**: `pino-multi-stream@^6.0.0` - No longer needed with new transport API
-- **Kept**: `file-stream-rotator@^1.0.0` - Marked as optional for backward compatibility
-
+- **Removed**: `file-stream-rotator@^1.0.0` - Legacy rotation is now handled via `pino-roll`; this package is no longer a dependency
 ### 2. Configuration Changes
 
 #### Old Configuration (still supported):

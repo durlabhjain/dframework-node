@@ -7,7 +7,6 @@
 
 import logger from '../lib/logger.js';
 import fs from 'fs';
-import path from 'path';
 
 console.log('='.repeat(60));
 console.log('TESTING MODERNIZED LOGGER');
