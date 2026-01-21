@@ -11,6 +11,7 @@ This library is to facilate using Spraxa's DFramework related applications via N
 - [ElasticSearch Queries](docs/ELASTICSEARCH_QUERIES.md) - SQL and Search API queries with pagination and memory optimization
 - [New Exports](docs/NEW_EXPORTS.md) - Documentation on newly available exports
 - [SQL Logging](docs/SQL_LOGGING.md) - Request-specific logging for SQL operations
+- [Logger Migration](docs/LOGGER_MIGRATION.md) - Migration guide for the modernized logging system
 - [Examples](docs/examples/) - Working examples demonstrating framework features
 - [TODO](TODO.md) - Comprehensive list of improvements and future enhancements
 
@@ -390,54 +391,138 @@ const results = await framework.elastic.sqlQuery({
 
 ### Logging
 
+The framework uses [Pino](https://getpino.io/) v10+ for high-performance, asynchronous logging with automatic file rotation via [pino-roll](https://github.com/mcollina/pino-roll).
+
+#### Key Features
+- **Async Logging**: Non-blocking log writes for better performance under heavy load
+- **Automatic File Rotation**: Time-based (daily/hourly) and size-based rotation
+- **Multiple Log Streams**: Separate files for different log levels (main, error, slow, client-error)
+- **Custom Log Levels**: Define application-specific log levels
+- **HTTP Transport**: Send logs to remote endpoints
+- **Graceful Shutdown**: Automatic log flushing on process exit
+- **Symlinks**: Always-current log file symlinks (e.g., `current.log`)
+
 #### Configuration
-1. Need to create config.json file on root of the project, which can be override with all config with local file like config.local.json
-2. Configuration in the JSON file which has all default values which can change accordingly
-```
+1. Create `config.json` in the project root (can be overridden with `config.local.json`)
+2. Configure logging options as needed:
+
+```json
 {
-     "logging": {
+    "logging": {
         "otherConfig": {
             "stdout": true,
+            "logLevel": "info",
+            "logFolder": "./logs",
+            "mixin": null,
             "httpConfig": {
                 "url": "http://xyz.com/error_post",
                 "headers": {}
             },
-            postLevel: "error",
-            stdout: true,
-            logLevel: 'debug',
-            logFolder: './logs',
-            mixin: null,
+            "postLevel": "error"
         },
         "prettyPrint": {
-            translateTime: 'SYS:yyyy-mm-dd h:MM:ss',
-            ignore: '',
-            colorize: true,
-            singleLine: false,
-            levelFirst: false,
+            "translateTime": "SYS:yyyy-mm-dd h:MM:ss",
+            "ignore": "",
+            "colorize": true,
+            "singleLine": false,
+            "levelFirst": false
         },
         "file": {
-            frequency: 'daily',
-            verbose: false,
-            max_logs: '10d',
-            date_format: 'YYYY-MM-DD',
-            size: '1m',
-            extension: ".log"
+            "frequency": "daily",
+            "size": "10m",
+            "extension": ".json",
+            "limit": { "count": 10 }
         },
-        "customLevels" : { custom: 35 }
+        "customLevels": {
+            "slow": 35,
+            "clienterror": 45
+        }
     }
 }
 ```
 
-#### Example
+#### Configuration Options
 
-```
+**otherConfig:**
+- `stdout` (boolean): Enable/disable console output (default: true)
+- `logLevel` (string): Minimum log level ('trace', 'debug', 'info', 'warn', 'error', 'fatal')
+- `logFolder` (string): Directory for log files (default: './logs')
+- `mixin` (function): Function to add custom properties to all log entries
+- `httpConfig` (object): HTTP endpoint configuration for remote logging
+- `postLevel` (string): Minimum level for HTTP transport (default: 'error')
+
+**prettyPrint:**
+- `translateTime` (string): Time format for console output
+- `colorize` (boolean): Enable colored output (default: true for stdout)
+- `ignore` (string): Comma-separated list of keys to omit from logs
+- `singleLine` (boolean): Format logs as single lines
+- `levelFirst` (boolean): Show level before timestamp
+
+**file:**
+- `frequency` (string): Rotation frequency - 'daily', 'hourly', or milliseconds (default: 'daily')
+- `size` (string): Maximum file size before rotation - e.g., '1m', '100k', '1g' (default: '10m')
+- `extension` (string): Log file extension (default: '.json')
+- `limit` (object): File retention policy - `{ count: 10 }` keeps 10 old files (default: 10)
+
+**customLevels:**
+Define custom log levels with numeric values (higher = more severe). The framework includes:
+- `slow`: For slow query logging
+- `clienterror`: For client-side errors
+
+#### Log File Naming
+
+Log files are automatically named with dates and rotation counters:
+- `log.2026-01-20.1.json` - Main application log
+- `error.2026-01-20.1.json` - Error-level logs
+- `slow.2026-01-20.1.json` - Slow query logs (if custom level defined)
+- `client-error.2026-01-20.1.json` - Client error logs (if custom level defined)
+- `current.log` - Symlink to the current active log file
+
+#### Usage Example
+
+```javascript
 import { logger } from '@durlabh/dframework';
 
-logger.info("info");
-logger.debug("debug");
-logger.error("error");
-logger.trace("trace");
+// Basic logging
+logger.info('Application started');
+logger.debug('Debug information');
+logger.warn('Warning message');
+logger.error('Error occurred');
+logger.trace('Trace details');
+
+// Custom levels (if defined in config)
+logger.slow('Slow query detected', { query: 'SELECT...', duration: 5000 });
+logger.clienterror('Client error', { error: 'Invalid input' });
+
+// Child loggers with context
+const requestLogger = logger.child({ reqId: 'abc-123' });
+requestLogger.info('Processing request');
+
+// Structured logging
+logger.info({ user: 'john', action: 'login' }, 'User logged in');
 ```
+
+#### Performance Considerations
+
+The logger uses worker threads for all file operations, keeping the main event loop responsive under heavy load. Logs are automatically flushed on:
+- Process signals (SIGINT, SIGTERM)
+- Before process exit
+- Periodic intervals (managed by pino)
+
+For maximum performance in production:
+1. Set `logLevel` to 'info' or higher
+2. Use JSON format (`extension: '.json'`) for efficient parsing
+3. Enable file rotation to manage disk space
+4. Consider using remote log aggregation via `httpConfig`
+
+#### Migration from v1.0.62 and Earlier
+
+If upgrading from a version using `file-stream-rotator`:
+- The new implementation uses `pino-roll` for better performance and reliability
+- Configuration option `max_logs` is replaced by `limit: { count: N }`
+- Date format is now fixed at 'yyyy-MM-dd' for consistency
+- `verbose` and `date_format` options are removed
+- All other options remain backward compatible
 
 ## Business object columns
 
