@@ -411,7 +411,7 @@ The framework uses [Pino](https://getpino.io/) v10+ for high-performance, asynch
     "logging": {
         "otherConfig": {
             "stdout": true,
-            "logLevel": "debug",
+            "logLevel": "info",
             "logFolder": "./logs",
             "mixin": null,
             "httpConfig": {
@@ -429,7 +429,7 @@ The framework uses [Pino](https://getpino.io/) v10+ for high-performance, asynch
         },
         "file": {
             "frequency": "daily",
-            "size": "1m",
+            "size": "10m",
             "extension": ".json",
             "limit": { "count": 10 }
         },
@@ -460,7 +460,7 @@ The framework uses [Pino](https://getpino.io/) v10+ for high-performance, asynch
 
 **file:**
 - `frequency` (string): Rotation frequency - 'daily', 'hourly', or milliseconds (default: 'daily')
-- `size` (string): Maximum file size before rotation - e.g., '1m', '100k', '1g' (default: '1m')
+- `size` (string): Maximum file size before rotation - e.g., '1m', '100k', '1g' (default: '10m')
 - `extension` (string): Log file extension (default: '.json')
 - `limit` (object): File retention policy - `{ count: 10 }` keeps 10 old files (default: 10)
 

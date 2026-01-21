@@ -35,7 +35,7 @@ This document describes the changes made to modernize the logging system from `f
     "file": {
       "frequency": "daily",
       "limit": { "count": 10 },
-      "size": "1m",
+      "size": "10m",
       "extension": ".json"
     }
   }
