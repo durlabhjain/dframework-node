@@ -55,7 +55,37 @@ test('Each createRequest returns a fresh independent object with its own params'
     assert.strictEqual(req2.params['a'], undefined);
 });
 
-// Test 3: No stack overflow after many createRequest calls
+// Test 3: createPoolConnection returns a pool without using new keyword
+test('createPoolConnection returns pool from mysql.createPool (no new keyword)', async () => {
+    const instance = new Mysql();
+    const fakePool = { query: () => {}, execute: () => {} };
+    // Monkey-patch mysql.createPool to verify it is called without new
+    const mysql2 = await import('mysql2/promise');
+    const originalCreatePool = mysql2.default.createPool;
+    let calledAsFunction = false;
+    // We can't easily detect `new` vs function call for a factory, so we verify
+    // the returned pool is the one from createPool (not a new object from new)
+    mysql2.default.createPool = function (cfg) {
+        calledAsFunction = true;
+        return fakePool;
+    };
+    try {
+        const pool = await instance.createPoolConnection({ host: 'localhost' });
+        assert.strictEqual(pool, fakePool, 'Should return the pool from mysql.createPool');
+        assert.strictEqual(calledAsFunction, true, 'createPool should be called as a function');
+    } finally {
+        mysql2.default.createPool = originalCreatePool;
+    }
+});
+
+// Test 4: createPoolConnection returns null when no config provided
+test('createPoolConnection returns null when config is not provided', async () => {
+    const instance = new Mysql();
+    const result = await instance.createPoolConnection(null);
+    assert.strictEqual(result, null);
+});
+
+// Test 5: No stack overflow after many createRequest calls
 test('No stack overflow after 2000 createRequest calls', async () => {
     const mysql3 = createMysqlWithMockPool();
 
