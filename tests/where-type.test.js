@@ -96,6 +96,7 @@ console.log('\nTest 4: Date string with type="dateTimeLocal" skips UPPER() with 
         forWhere: true
     });
     test('Query does NOT contain UPPER(createdDate)', !result.includes('UPPER(createdDate)'), result);
+    test('Parameter value is NOT uppercased', request.parameters['createdDate'].value === '2024-01-15T00:00:00', JSON.stringify(request.parameters));
 }
 
 // Test 5: With type="date", sqlType is inferred as DateTime2 when not explicitly set
@@ -169,6 +170,7 @@ console.log('\nTest 9: Date string with type="datetime" skips UPPER() with force
         forWhere: true
     });
     test('Query does NOT contain UPPER(createdDate)', !result.includes('UPPER(createdDate)'), result);
+    test('Parameter value is NOT uppercased', request.parameters['createdDate'].value === '2024-01-15', JSON.stringify(request.parameters));
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);
