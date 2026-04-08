@@ -141,7 +141,7 @@ console.log('\nTest 8: Without forceCaseInsensitive, date type has no effect on 
     test('Query does NOT contain UPPER(createdDate)', !result.includes('UPPER(createdDate)'), result);
 }
 
-// Test 9: With type="dateTime" (lowercase) also skips UPPER()
+// Test 9: With type="dateTime" also skips UPPER()
 console.log('\nTest 9: Date string with type="dateTime" skips UPPER() with forceCaseInsensitive');
 {
     const sql = new Sql();
