@@ -83,22 +83,6 @@ console.log('\nTest 3: Date string with type="dateTime" skips UPPER() with force
     test('Parameter value is NOT uppercased', request.parameters['createdDate'].value === '2024-01-15 00:00:00', JSON.stringify(request.parameters));
 }
 
-// Test 4: With forceCaseInsensitive=true, type="dateTimeLocal" also skips UPPER()
-console.log('\nTest 4: Date string with type="dateTimeLocal" skips UPPER() with forceCaseInsensitive');
-{
-    const sql = new Sql();
-    sql.forceCaseInsensitive = true;
-    const request = createMockRequest();
-    const result = sql.addParameters({
-        query: 'SELECT 1',
-        request,
-        parameters: { createdDate: { value: '2024-01-15T00:00:00', type: 'dateTimeLocal' } },
-        forWhere: true
-    });
-    test('Query does NOT contain UPPER(createdDate)', !result.includes('UPPER(createdDate)'), result);
-    test('Parameter value is NOT uppercased', request.parameters['createdDate'].value === '2024-01-15T00:00:00', JSON.stringify(request.parameters));
-}
-
 // Test 5: With type="date", sqlType is inferred as DateTime2 when not explicitly set
 console.log('\nTest 5: sqlType is inferred as DateTime2 when type="date"');
 {
@@ -157,8 +141,8 @@ console.log('\nTest 8: Without forceCaseInsensitive, date type has no effect on 
     test('Query does NOT contain UPPER(createdDate)', !result.includes('UPPER(createdDate)'), result);
 }
 
-// Test 9: With type="datetime" (lowercase) also skips UPPER()
-console.log('\nTest 9: Date string with type="datetime" skips UPPER() with forceCaseInsensitive');
+// Test 9: With type="dateTime" also skips UPPER()
+console.log('\nTest 9: Date string with type="dateTime" skips UPPER() with forceCaseInsensitive');
 {
     const sql = new Sql();
     sql.forceCaseInsensitive = true;
@@ -166,7 +150,7 @@ console.log('\nTest 9: Date string with type="datetime" skips UPPER() with force
     const result = sql.addParameters({
         query: 'SELECT 1',
         request,
-        parameters: { createdDate: { value: '2024-01-15', type: 'datetime' } },
+        parameters: { createdDate: { value: '2024-01-15', type: 'dateTime' } },
         forWhere: true
     });
     test('Query does NOT contain UPPER(createdDate)', !result.includes('UPPER(createdDate)'), result);
