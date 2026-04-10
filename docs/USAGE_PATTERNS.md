@@ -670,9 +670,52 @@ app.get('/api/reports/sales', async (req, res) => {
 });
 ```
 
+### Pattern 17: Report Configuration (Default Output Folder)
+
+You can configure a default output folder for all reports using either JSON configuration or programmatic override:
+
+**Option 1: JSON Configuration (config.json or config.local.json)**
+
+```json
+{
+  "defaultReportPath": "./temp"
+}
+```
+
+**Option 2: Programmatic Override**
+
+```javascript
+import appConfig from '@durlabh/dframework/appConfig';
+
+// Set default output folder at application startup
+appConfig.defaultReportPath = './temp';
+
+// Now all reports will use ./temp as the default output folder
+await reports.execute({
+    ReportType: SalesReport,
+    options: {
+        // No need to specify outputPath - will use ./temp
+    }
+});
+
+// You can still override per-report if needed
+await reports.execute({
+    ReportType: SalesReport,
+    options: {
+        outputPath: './custom-folder'  // Override the default
+    }
+});
+```
+
+**Benefits:**
+- Set once, use everywhere - no need to specify outputPath for each report
+- Easy to change output location across your entire application
+- Still allows per-report overrides when needed
+- Works with toExcel, reports.execute, and all report types (Excel, CSV, JSON, text)
+
 ## ElasticSearch Integration
 
-### Pattern 17: Basic ElasticSearch Query
+### Pattern 18: Basic ElasticSearch Query
 
 ```javascript
 import { Framework } from '@durlabh/dframework';
