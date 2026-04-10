@@ -478,5 +478,125 @@ console.log('\nTest 30: addParameters gzipJson — throws TypeError for Buffer v
     test('Error message mentions columnTypes.gzipJson', caughtError && caughtError.message.includes('columnTypes.gzipJson'));
 }
 
+// Test 31: addParameters with forWhere=true and gzip type uses suffixed fieldName in WHERE clause
+console.log('\nTest 31: addParameters gzip with forWhere=true uses suffixed fieldName in WHERE clause');
+{
+    const sql = new Sql();
+    const request = createMockRequest();
+    const result = sql.addParameters({
+        query: 'SELECT * FROM Documents',
+        request,
+        parameters: { Memo: { value: 'find me', type: columnTypes.gzip } },
+        forWhere: true
+    });
+    // Parameter name stays as "Memo" (not "Memo_Binary")
+    test('Parameter bound under original name "Memo"', request.parameters['Memo'] !== undefined);
+    test('"Memo_Binary" not added to request', request.parameters['Memo_Binary'] === undefined);
+    // WHERE clause uses suffixed fieldName: Memo_Binary = @Memo
+    test('WHERE clause contains "Memo_Binary"', result.includes('Memo_Binary'), result);
+    test('WHERE clause references @Memo', result.includes('@Memo'), result);
+}
+
+// Test 32: addParameters with forWhere=true and gzipJson type uses suffixed fieldName in WHERE clause
+console.log('\nTest 32: addParameters gzipJson with forWhere=true uses suffixed fieldName in WHERE clause');
+{
+    const sql = new Sql();
+    const request = createMockRequest();
+    const result = sql.addParameters({
+        query: 'SELECT * FROM Documents',
+        request,
+        parameters: { Meta: { value: { key: 'val' }, type: columnTypes.gzipJson } },
+        forWhere: true
+    });
+    test('Parameter bound under original name "Meta"', request.parameters['Meta'] !== undefined);
+    test('"Meta_Binary" not added to request', request.parameters['Meta_Binary'] === undefined);
+    test('WHERE clause contains "Meta_Binary"', result.includes('Meta_Binary'), result);
+    test('WHERE clause references @Meta', result.includes('@Meta'), result);
+}
+
+// Test 33: addParameters with forWhere=true and json type does NOT suffix fieldName in WHERE clause
+console.log('\nTest 33: addParameters json with forWhere=true does not suffix fieldName in WHERE clause');
+{
+    const sql = new Sql();
+    const request = createMockRequest();
+    const result = sql.addParameters({
+        query: 'SELECT * FROM Documents',
+        request,
+        parameters: { Config: { value: { x: 1 }, type: columnTypes.json } },
+        forWhere: true
+    });
+    test('Parameter bound under "Config"', request.parameters['Config'] !== undefined);
+    test('"Config_Binary" not in request', request.parameters['Config_Binary'] === undefined);
+    // WHERE clause uses unsuffixed fieldName: Config = @Config
+    test('WHERE clause contains "Config ="', result.includes('Config ='), result);
+    test('WHERE clause does not contain "Config_Binary"', !result.includes('Config_Binary'), result);
+}
+
+// Test 34: roundtrip — addParameters (forWhere=false) then normalizeColumns restores original value
+console.log('\nTest 34: roundtrip — addParameters(forWhere=false) compresses; normalizeColumns decompresses');
+{
+    const sql = new Sql();
+    const request = createMockRequest();
+    const original = 'roundtrip content';
+
+    sql.addParameters({
+        query: 'INSERT INTO T (Memo_Binary) VALUES (@Memo)',
+        request,
+        parameters: { Memo: { value: original, type: columnTypes.gzip } }
+    });
+
+    const compressedBuffer = request.parameters['Memo'].value;
+    // Simulate the row returned from the DB (column is stored as Memo_Binary)
+    const rows = [{ Memo_Binary: compressedBuffer }];
+    sql.normalizeColumns(rows, { Memo: columnTypes.gzip });
+
+    test('Roundtrip value matches original', rows[0].Memo === original, String(rows[0].Memo));
+    test('"Memo_Binary" removed after normalizeColumns', !('Memo_Binary' in rows[0]));
+}
+
+// Test 35: roundtrip — gzipJson addParameters then normalizeColumns restores original object
+console.log('\nTest 35: roundtrip — gzipJson addParameters then normalizeColumns restores original object');
+{
+    const sql = new Sql();
+    const request = createMockRequest();
+    const original = { name: 'Alice', scores: [10, 20, 30] };
+
+    sql.addParameters({
+        query: 'INSERT INTO T (Meta_Binary) VALUES (@Meta)',
+        request,
+        parameters: { Meta: { value: original, type: columnTypes.gzipJson } }
+    });
+
+    const compressedBuffer = request.parameters['Meta'].value;
+    const rows = [{ Meta_Binary: compressedBuffer }];
+    sql.normalizeColumns(rows, { Meta: columnTypes.gzipJson });
+
+    test('Roundtrip object name matches', rows[0].Meta.name === 'Alice', JSON.stringify(rows[0].Meta));
+    test('Roundtrip object scores match', JSON.stringify(rows[0].Meta.scores) === '[10,20,30]');
+    test('"Meta_Binary" removed after normalizeColumns', !('Meta_Binary' in rows[0]));
+}
+
+// Test 36: roundtrip — json addParameters then normalizeColumns restores original object
+console.log('\nTest 36: roundtrip — json addParameters then normalizeColumns restores original object');
+{
+    const sql = new Sql();
+    const request = createMockRequest();
+    const original = { theme: 'dark', fontSize: 14 };
+
+    sql.addParameters({
+        query: 'INSERT INTO T (Config) VALUES (@Config)',
+        request,
+        parameters: { Config: { value: original, type: columnTypes.json } }
+    });
+
+    const jsonStr = request.parameters['Config'].value;
+    // Simulate DB returning the JSON string in the Config column
+    const rows = [{ Config: jsonStr }];
+    sql.normalizeColumns(rows, { Config: columnTypes.json });
+
+    test('Roundtrip json theme matches', rows[0].Config.theme === 'dark', JSON.stringify(rows[0].Config));
+    test('Roundtrip json fontSize matches', rows[0].Config.fontSize === 14);
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 if (failed > 0) process.exit(1);

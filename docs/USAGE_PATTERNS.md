@@ -222,6 +222,133 @@ const result5 = sql.in({
 //    - Cons: Often slower than INNER JOIN or EXISTS for large value lists
 ```
 
+### Pattern 4b: Column Type Transformations (columnTypes)
+
+Use `columnTypes` when you need to efficiently store large text blobs or complex objects in the database as compressed binary data or serialized JSON. The `columnTypes` enum provides automatic transformations when binding SQL parameters or normalizing result-set columns. Three types are supported:
+
+| Type | Description | Parameter stored as |
+|------|-------------|---------------------|
+| `columnTypes.json` | Serializes an object/array to a JSON string | `VARCHAR`/`NVARCHAR` |
+| `columnTypes.gzip` | Compresses a string value using gzip | `VARBINARY` (Buffer) |
+| `columnTypes.gzipJson` | Serializes to JSON and then compresses with gzip | `VARBINARY` (Buffer) |
+
+#### Binary column suffix
+
+For `gzip` and `gzipJson` types, the logical column name automatically gets a suffix (default `_Binary`) appended when the framework constructs SQL column references (such as in WHERE clauses or auto-generated queries). For example, a logical column named `Memo` maps to `Memo_Binary` in the database. **The SQL parameter name is always kept as the original name** (e.g., `@Memo`), so stored procedures and hand-written SQL bind to `@Memo` regardless of the binary suffix.
+
+The suffix is controlled by the `binaryColumnSuffix` property:
+
+```javascript
+import { Sql } from '@durlabh/dframework';
+
+const sql = new Sql();
+sql.binaryColumnSuffix = '_Binary'; // default
+sql.binaryColumnSuffix = '_Blob';   // custom suffix
+sql.binaryColumnSuffix = '';        // disable suffix entirely
+```
+
+#### Using columnTypes in `parameters` (non-WHERE bindings)
+
+Pass `type` alongside `value` in any `parameters` entry passed to `execute()` or `addParameters()` with `forWhere: false`. The value is automatically transformed before it is bound to the SQL request.
+
+```javascript
+import { Sql, enums } from '@durlabh/dframework';
+
+const { columnTypes } = enums;
+const sql = new Sql();
+await sql.setConfig({ /* connection config */ });
+
+// INSERT with gzip-compressed and JSON-serialized columns
+const result = await sql.execute({
+    query: `
+        INSERT INTO Documents (Name, Memo_Binary, Config)
+        VALUES (@Name, @Memo, @Config)
+    `,
+    parameters: {
+        Name: 'My Document',
+
+        // Compresses the string value to a gzip Buffer.
+        // The SQL parameter is @Memo (not @Memo_Binary).
+        // The target column in the table is Memo_Binary.
+        Memo: { value: 'Hello World', type: columnTypes.gzip },
+
+        // Serializes the object to a JSON string before binding.
+        // The SQL parameter is @Config; target column is Config (VARCHAR).
+        Config: { value: { theme: 'dark', fontSize: 14 }, type: columnTypes.json }
+    }
+});
+
+// UPDATE with gzipJson (serialize to JSON then gzip-compress)
+const result2 = await sql.execute({
+    query: `UPDATE Documents SET Meta_Binary = @Meta WHERE DocumentId = @DocumentId`,
+    parameters: {
+        DocumentId: 42,
+
+        // Serializes to JSON first, then compresses to a gzip Buffer.
+        // SQL parameter is @Meta; target column is Meta_Binary.
+        Meta: { value: { author: 'Alice', tags: ['news', 'tech'] }, type: columnTypes.gzipJson }
+    }
+});
+```
+
+#### Using columnTypes with stored procedures
+
+The parameter name sent to the stored procedure is always the original key name (e.g., `@Content`). Define the stored procedure parameter as `VARBINARY(MAX)` for `gzip`/`gzipJson` or as `NVARCHAR(MAX)` for `json`:
+
+```javascript
+// Stored procedure signature (T-SQL):
+//   @DocumentName  VARCHAR(200),
+//   @Content       VARBINARY(MAX),   -- receives the gzip-compressed Buffer
+//   @Metadata      NVARCHAR(MAX)     -- receives the JSON string
+const result = await sql.execute({
+    query: 'Documents_Insert',   // stored procedure name
+    parameters: {
+        DocumentName: 'Report Q1',
+        Content:  { value: reportText, type: columnTypes.gzip },
+        Metadata: { value: { author: 'Admin', created: new Date() }, type: columnTypes.json }
+    }
+});
+```
+
+#### Reading back compressed/serialized columns with `normalizeColumns`
+
+After fetching rows that contain compressed or serialized columns, use `normalizeColumns()` to transform them back to their original forms. For `gzip` and `gzipJson` types, `normalizeColumns` automatically looks for a suffixed column first (e.g., `Memo_Binary`) and, if found, decompresses it into the logical column name (`Memo`) and removes the suffixed column from the row.
+
+```javascript
+import { Sql, enums } from '@durlabh/dframework';
+
+const { columnTypes } = enums;
+
+const { success, data } = await sql.execute({
+    query: 'SELECT DocumentId, Name, Memo_Binary, Config, Meta_Binary FROM Documents'
+});
+
+if (success) {
+    // Decompress and deserialize result columns in-place
+    sql.normalizeColumns(data.recordset, {
+        Memo:   columnTypes.gzip,     // decompresses Memo_Binary → Memo (string); removes Memo_Binary
+        Config: columnTypes.json,     // parses Config JSON string → object
+        Meta:   columnTypes.gzipJson  // decompresses Meta_Binary → Meta (object); removes Meta_Binary
+    });
+
+    // Each row now has the transformed columns
+    console.log(data.recordset[0].Memo);   // 'Hello World'
+    console.log(data.recordset[0].Config); // { theme: 'dark', fontSize: 14 }
+    console.log(data.recordset[0].Meta);   // { author: 'Alice', tags: ['news', 'tech'] }
+}
+```
+
+#### Importing columnTypes
+
+```javascript
+import { enums } from '@durlabh/dframework';
+
+const { columnTypes } = enums;
+// columnTypes.json     → 'json'
+// columnTypes.gzip     → 'gzip'
+// columnTypes.gzipJson → 'gzipJson'
+```
+
 ## Business Objects
 
 ### Pattern 5: Basic Business Object
