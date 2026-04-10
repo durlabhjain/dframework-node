@@ -227,5 +227,86 @@ console.log('\nTest 14: columnTypes enum has expected values');
     test('columnTypes.json is "json"', columnTypes.json === 'json');
 }
 
+// ─── binaryColumnSuffix tests ──────────────────────────────────────────────
+
+console.log('\nTesting binaryColumnSuffix behaviour...\n');
+
+// Test 15: default binaryColumnSuffix is "_Binary"
+console.log('Test 15: default binaryColumnSuffix is "_Binary"');
+{
+    const sql = new Sql();
+    test('Default binaryColumnSuffix is "_Binary"', sql.binaryColumnSuffix === '_Binary');
+}
+
+// Test 16: normalizeColumns reads from "Col_Binary", writes to "Col", removes "Col_Binary"
+console.log('\nTest 16: gzip column read from suffixed property, written to logical name');
+{
+    const sql = new Sql();
+    const original = 'memo content';
+    const compressed = zlib.gzipSync(Buffer.from(original));
+    const rows = [{ Memo_Binary: compressed, Name: 'Alice' }];
+    sql.normalizeColumns(rows, { Memo: columnTypes.gzip });
+    test('Logical column "Memo" populated', rows[0].Memo === original, String(rows[0].Memo));
+    test('"Memo_Binary" removed from row', !('Memo_Binary' in rows[0]));
+    test('"Name" still present', rows[0].Name === 'Alice');
+}
+
+// Test 17: gzipJson column read from suffixed property, written to logical name as object
+console.log('\nTest 17: gzipJson column read from suffixed property, parsed as JSON');
+{
+    const sql = new Sql();
+    const original = { info: 'data', n: 5 };
+    const compressed = zlib.gzipSync(Buffer.from(JSON.stringify(original)));
+    const rows = [{ Meta_Binary: compressed }];
+    sql.normalizeColumns(rows, { Meta: columnTypes.gzipJson });
+    test('"Meta" column is an object', typeof rows[0].Meta === 'object');
+    test('"Meta" object has correct value', rows[0].Meta.info === 'data' && rows[0].Meta.n === 5);
+    test('"Meta_Binary" removed', !('Meta_Binary' in rows[0]));
+}
+
+// Test 18: if no suffixed column exists, fall back to direct column name
+console.log('\nTest 18: falls back to direct column name when no suffixed column exists');
+{
+    const sql = new Sql();
+    const original = 'fallback value';
+    const compressed = zlib.gzipSync(Buffer.from(original));
+    const rows = [{ Data: compressed }]; // no "Data_Binary"
+    sql.normalizeColumns(rows, { Data: columnTypes.gzip });
+    test('"Data" decompressed from direct column', rows[0].Data === original, String(rows[0].Data));
+}
+
+// Test 19: json type is never affected by binaryColumnSuffix
+console.log('\nTest 19: json type column is not affected by binaryColumnSuffix');
+{
+    const sql = new Sql();
+    const rows = [{ Config_Binary: '{"x":1}', Config: '{"y":2}' }];
+    sql.normalizeColumns(rows, { Config: columnTypes.json });
+    test('"Config" parsed as JSON from direct column', rows[0].Config.y === 2);
+    test('"Config_Binary" untouched', rows[0].Config_Binary === '{"x":1}');
+}
+
+// Test 20: binaryColumnSuffix can be overridden per instance
+console.log('\nTest 20: binaryColumnSuffix can be overridden');
+{
+    const sql = new Sql();
+    sql.binaryColumnSuffix = '_Blob';
+    const original = 'custom suffix';
+    const compressed = zlib.gzipSync(Buffer.from(original));
+    const rows = [{ Note_Blob: compressed }];
+    sql.normalizeColumns(rows, { Note: columnTypes.gzip });
+    test('"Note" populated from "_Blob" suffixed column', rows[0].Note === original, String(rows[0].Note));
+    test('"Note_Blob" removed', !('Note_Blob' in rows[0]));
+}
+
+// Test 21: null value in suffixed column is skipped
+console.log('\nTest 21: null value in suffixed column is skipped');
+{
+    const sql = new Sql();
+    const rows = [{ Memo_Binary: null, Name: 'Bob' }];
+    sql.normalizeColumns(rows, { Memo: columnTypes.gzip });
+    test('"Memo" not added when suffixed column is null', !('Memo' in rows[0]));
+    test('"Memo_Binary" stays as null', rows[0].Memo_Binary === null);
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 if (failed > 0) process.exit(1);
