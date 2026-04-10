@@ -423,6 +423,23 @@ console.log('\nTest 28: normalizeColumns JSON parse error includes column name a
     test('Original SyntaxError preserved as cause', caughtError && caughtError.cause instanceof SyntaxError);
 }
 
+// Test 28b: normalizeColumns throws TypeError for non-Buffer gzip value
+console.log('\nTest 28b: normalizeColumns TypeError for non-Buffer gzip value');
+{
+    const sql = new Sql();
+    const rows = [{ data: 'unexpected-string' }];
+    let caughtError;
+    try {
+        sql.normalizeColumns(rows, { data: columnTypes.gzip });
+    } catch (err) {
+        caughtError = err;
+    }
+    test('TypeError thrown for non-Buffer gzip value', caughtError instanceof TypeError);
+    test('TypeError message includes column name', caughtError && caughtError.message.includes('"data"'));
+    test('TypeError message includes row index', caughtError && caughtError.message.includes('row 0'));
+    test('TypeError message includes actual type', caughtError && caughtError.message.includes('String'));
+}
+
 // Test 29: addParameters gzip throws TypeError for Buffer input
 console.log('\nTest 29: addParameters gzip — throws TypeError for Buffer value');
 {
