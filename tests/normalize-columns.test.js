@@ -155,7 +155,7 @@ console.log('\nTest 9: addParameters with type="json" and string value leaves va
     test('String value stays as string', request.parameters['payload'].value === '{"a":1}');
 }
 
-// Test 10: addParameters with type=gzip compresses string to Buffer
+// Test 10: addParameters with type=gzip compresses string to Buffer, binds under suffixed name
 console.log('\nTest 10: addParameters with type="gzip" compresses string to Buffer');
 {
     const sql = new Sql();
@@ -166,13 +166,13 @@ console.log('\nTest 10: addParameters with type="gzip" compresses string to Buff
         request,
         parameters: { data: { value: original, type: columnTypes.gzip } }
     });
-    const stored = request.parameters['data'].value;
-    test('Gzip value is a Buffer', Buffer.isBuffer(stored), String(typeof stored));
+    const stored = request.parameters['data_Binary'].value;
+    test('Gzip value is a Buffer (bound under data_Binary)', Buffer.isBuffer(stored), String(typeof stored));
     const decompressed = zlib.gunzipSync(stored).toString('utf8');
     test('Gzip value decompresses correctly', decompressed === original, decompressed);
 }
 
-// Test 11: addParameters with type=gzipJson stringifies object and compresses
+// Test 11: addParameters with type=gzipJson stringifies object and compresses, binds under suffixed name
 console.log('\nTest 11: addParameters with type="gzipJson" stringifies and compresses object');
 {
     const sql = new Sql();
@@ -183,13 +183,13 @@ console.log('\nTest 11: addParameters with type="gzipJson" stringifies and compr
         request,
         parameters: { meta: { value: obj, type: columnTypes.gzipJson } }
     });
-    const stored = request.parameters['meta'].value;
-    test('GzipJson value is a Buffer', Buffer.isBuffer(stored));
+    const stored = request.parameters['meta_Binary'].value;
+    test('GzipJson value is a Buffer (bound under meta_Binary)', Buffer.isBuffer(stored));
     const parsed = JSON.parse(zlib.gunzipSync(stored).toString('utf8'));
     test('GzipJson decompresses and parses correctly', parsed.key === 'val' && parsed.n === 7);
 }
 
-// Test 12: addParameters with type=gzipJson and string value compresses as-is
+// Test 12: addParameters with type=gzipJson and string value compresses as-is, binds under suffixed name
 console.log('\nTest 12: addParameters with type="gzipJson" and string value compresses the string');
 {
     const sql = new Sql();
@@ -200,8 +200,8 @@ console.log('\nTest 12: addParameters with type="gzipJson" and string value comp
         request,
         parameters: { meta: { value: str, type: columnTypes.gzipJson } }
     });
-    const stored = request.parameters['meta'].value;
-    test('GzipJson string value stored as Buffer', Buffer.isBuffer(stored));
+    const stored = request.parameters['meta_Binary'].value;
+    test('GzipJson string value stored as Buffer (bound under meta_Binary)', Buffer.isBuffer(stored));
     const decompressed = zlib.gunzipSync(stored).toString('utf8');
     test('GzipJson string decompresses correctly', decompressed === str, decompressed);
 }
@@ -216,7 +216,7 @@ console.log('\nTest 13: addParameters with type="gzip" and null value skips the 
         request,
         parameters: { data: { value: null, type: columnTypes.gzip } }
     });
-    test('Null gzip value is not added to request', request.parameters['data'] === undefined);
+    test('Null gzip value is not added to request', request.parameters['data_Binary'] === undefined);
 }
 
 // Test 14: columnTypes enum values
@@ -306,6 +306,86 @@ console.log('\nTest 21: null value in suffixed column is skipped');
     sql.normalizeColumns(rows, { Memo: columnTypes.gzip });
     test('"Memo" not added when suffixed column is null', !('Memo' in rows[0]));
     test('"Memo_Binary" stays as null', rows[0].Memo_Binary === null);
+}
+
+// ─── addParameters binaryColumnSuffix tests ───────────────────────────────
+
+console.log('\nTesting addParameters binaryColumnSuffix behaviour...\n');
+
+// Test 22: gzip parameter bound under suffixed name, fieldName uses suffix
+console.log('Test 22: addParameters gzip — parameter bound under "<col>_Binary"');
+{
+    const sql = new Sql();
+    const request = createMockRequest();
+    sql.addParameters({
+        query: 'SELECT 1',
+        request,
+        parameters: { Memo: { value: 'hello', type: columnTypes.gzip } }
+    });
+    test('"Memo_Binary" parameter exists in request', request.parameters['Memo_Binary'] !== undefined);
+    test('"Memo" (unsuffixed) not in request', request.parameters['Memo'] === undefined);
+    test('"Memo_Binary" value is a Buffer', Buffer.isBuffer(request.parameters['Memo_Binary'].value));
+    test('Decompresses correctly', zlib.gunzipSync(request.parameters['Memo_Binary'].value).toString('utf8') === 'hello');
+}
+
+// Test 23: gzipJson parameter bound under suffixed name
+console.log('\nTest 23: addParameters gzipJson — parameter bound under "<col>_Binary"');
+{
+    const sql = new Sql();
+    const request = createMockRequest();
+    sql.addParameters({
+        query: 'SELECT 1',
+        request,
+        parameters: { Config: { value: { x: 1 }, type: columnTypes.gzipJson } }
+    });
+    test('"Config_Binary" parameter exists in request', request.parameters['Config_Binary'] !== undefined);
+    test('"Config" (unsuffixed) not in request', request.parameters['Config'] === undefined);
+    const parsed = JSON.parse(zlib.gunzipSync(request.parameters['Config_Binary'].value).toString('utf8'));
+    test('GzipJson decompresses and parses correctly', parsed.x === 1);
+}
+
+// Test 24: json type is NOT suffixed
+console.log('\nTest 24: addParameters json — parameter NOT suffixed');
+{
+    const sql = new Sql();
+    const request = createMockRequest();
+    sql.addParameters({
+        query: 'SELECT 1',
+        request,
+        parameters: { Settings: { value: { y: 2 }, type: columnTypes.json } }
+    });
+    test('"Settings" parameter exists (no suffix)', request.parameters['Settings'] !== undefined);
+    test('"Settings_Binary" not in request', request.parameters['Settings_Binary'] === undefined);
+}
+
+// Test 25: binaryColumnSuffix respected in addParameters when overridden
+console.log('\nTest 25: addParameters honours overridden binaryColumnSuffix');
+{
+    const sql = new Sql();
+    sql.binaryColumnSuffix = '_Blob';
+    const request = createMockRequest();
+    sql.addParameters({
+        query: 'SELECT 1',
+        request,
+        parameters: { Note: { value: 'text', type: columnTypes.gzip } }
+    });
+    test('"Note_Blob" parameter exists', request.parameters['Note_Blob'] !== undefined);
+    test('"Note_Binary" not in request', request.parameters['Note_Binary'] === undefined);
+}
+
+// Test 26: binaryColumnSuffix="" disables suffix in addParameters
+console.log('\nTest 26: addParameters with empty binaryColumnSuffix binds under original name');
+{
+    const sql = new Sql();
+    sql.binaryColumnSuffix = '';
+    const request = createMockRequest();
+    sql.addParameters({
+        query: 'SELECT 1',
+        request,
+        parameters: { Data: { value: 'raw', type: columnTypes.gzip } }
+    });
+    test('"Data" bound directly when suffix is empty', request.parameters['Data'] !== undefined);
+    test('"Data_Binary" not in request', request.parameters['Data_Binary'] === undefined);
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);
