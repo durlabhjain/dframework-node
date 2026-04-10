@@ -183,6 +183,46 @@ const users = await framework.sql.execute({
 
 For detailed examples and performance comparisons, see [Pattern 4a in USAGE_PATTERNS.md](docs/USAGE_PATTERNS.md).
 
+#### Column Type Transformations (columnTypes)
+
+The framework supports automatic compression and serialization of SQL parameters via `columnTypes`. Use the `type` property when passing parameters to automatically transform values before binding them:
+
+```javascript
+import { enums } from 'dframework-node';
+
+const { columnTypes } = enums;
+
+// Store a gzip-compressed string (target column: Memo_Binary, parameter: @Memo)
+await framework.sql.execute({
+    query: `INSERT INTO Documents (Name, Memo_Binary, Config) VALUES (@Name, @Memo, @Config)`,
+    parameters: {
+        Name: 'My Document',
+        Memo:   { value: 'Hello World',                           type: columnTypes.gzip },     // compresses to Buffer
+        Config: { value: { theme: 'dark', fontSize: 14 },         type: columnTypes.json }      // serializes to JSON string
+    }
+});
+
+// Read back and decompress/deserialize using normalizeColumns
+const { success, data } = await framework.sql.execute({
+    query: 'SELECT DocumentId, Name, Memo_Binary, Config FROM Documents'
+});
+if (success) {
+    framework.sql.normalizeColumns(data.recordset, {
+        Memo:   columnTypes.gzip,  // decompresses Memo_Binary → Memo (string)
+        Config: columnTypes.json   // parses Config string → object
+    });
+}
+```
+
+| Type | Description | Stored as |
+|------|-------------|-----------|
+| `columnTypes.json` | Serializes object/array to JSON string | `VARCHAR`/`NVARCHAR` |
+| `columnTypes.gzip` | Compresses string to gzip Buffer | `VARBINARY` |
+| `columnTypes.gzipJson` | Serializes to JSON then compresses | `VARBINARY` |
+
+For gzip/gzipJson types, the DB column name automatically gets a `_Binary` suffix (configurable via `sql.binaryColumnSuffix`), while the SQL parameter name stays unchanged.
+
+For full examples including stored procedures and `normalizeColumns`, see [Pattern 4b in USAGE_PATTERNS.md](docs/USAGE_PATTERNS.md).
 
 ### Join
 
