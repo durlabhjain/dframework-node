@@ -685,12 +685,10 @@ You can configure a default output folder for all reports using either JSON conf
 **Option 2: Programmatic Override**
 
 ```javascript
-import { setReportConfig } from '@durlabh/dframework/reports';
+import appConfig from '@durlabh/dframework/appConfig';
 
 // Set default output folder at application startup
-setReportConfig({
-    defaultReportPath: './temp'
-});
+appConfig.defaultReportPath = './temp';
 
 // Now all reports will use ./temp as the default output folder
 await reports.execute({

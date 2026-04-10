@@ -5,7 +5,8 @@
  * Verifies that defaultReportPath works correctly
  */
 
-import { reports, setReportConfig, toExcel } from '../lib/reports.mjs';
+import { reports, toExcel } from '../lib/reports.mjs';
+import appConfig from '../lib/appConfig.mjs';
 import fs from 'fs-extra';
 import path from 'path';
 
@@ -30,16 +31,16 @@ function test(name, condition) {
 const testDir = '/tmp/report-config-test';
 fs.ensureDirSync(testDir);
 
-// Test 1: Verify setReportConfig function exists
-test('setReportConfig function is exported', typeof setReportConfig === 'function');
+// Test 1: Verify appConfig is importable
+test('appConfig is imported', typeof appConfig === 'object');
 
 // Test 2: Test programmatic configuration
 try {
-    setReportConfig({ defaultReportPath: testDir });
-    test('setReportConfig accepts configuration', true);
+    appConfig.defaultReportPath = testDir;
+    test('appConfig.defaultReportPath can be set', appConfig.defaultReportPath === testDir);
 } catch (err) {
     console.error('Error setting config:', err);
-    test('setReportConfig accepts configuration', false);
+    test('appConfig.defaultReportPath can be set', false);
 }
 
 // Test 3: Test toExcel uses the configured default path

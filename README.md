@@ -25,7 +25,7 @@ The library exports several utility classes and modules that can be used in your
 - `MySql` - MySQL database wrapper with common functionality
 - `SqlHelper` - SQL utility functions for field validation and queries
 - `ListParameters` - Helper for constructing list request parameters
-- `reports` / `toExcel` / `setReportConfig` - Report generation utilities (Excel, CSV, JSON, text)
+- `reports` / `toExcel` - Report generation utilities (Excel, CSV, JSON, text)
 - `generateReport` - Express middleware for report generation
 - `enums` - Shared enums and constants
 

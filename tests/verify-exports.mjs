@@ -14,7 +14,6 @@ import {
     reports,
     render,
     toExcel,
-    setReportConfig,
     generateReport,
     enums,
     // Also test that existing exports still work
@@ -61,7 +60,6 @@ test('ListParameters is exported', typeof ListParameters === 'function');
 test('reports is exported', typeof reports === 'object' && typeof reports.execute === 'function');
 test('render is exported', typeof render === 'function');
 test('toExcel is exported', typeof toExcel === 'function');
-test('setReportConfig is exported', typeof setReportConfig === 'function');
 test('generateReport is exported', typeof generateReport === 'function');
 test('enums is exported', typeof enums === 'object');
 
@@ -154,7 +152,6 @@ Promise.all([
     test('Subpath ./lib/reports.mjs works', typeof reportsModule.reports === 'object');
     test('Subpath ./lib/reports.mjs exports toExcel', typeof reportsModule.toExcel === 'function');
     test('Subpath ./lib/reports.mjs exports render', typeof reportsModule.render === 'function');
-    test('Subpath ./lib/reports.mjs exports setReportConfig', typeof reportsModule.setReportConfig === 'function');
     test('Subpath ./lib/business/query-base.mjs works', typeof queryBase.default === 'function');
     test('Subpath ./lib/enums.mjs works', typeof enumsModule.default === 'object');
     
