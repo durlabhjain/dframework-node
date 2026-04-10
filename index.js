@@ -19,8 +19,8 @@ import Sql from './lib/sql.js';
 import MySql from './lib/mysql.js';
 import SqlHelper from './lib/business/sql-helper.mjs';
 import ListParameters from './lib/list-parameters.js';
-import { reports, toExcel } from './lib/reports.mjs';
+import { reports, render, toExcel } from './lib/reports.mjs';
 import generateReport from './lib/business/query-base.mjs';
 import enums from './lib/enums.mjs';
 
-export { Framework, mssql, mysql, Azure, util, httpAuth, Elastic, adapters, logger, appConfig, lookup, sqlErrorMapper, BusinessBase, responseTransformer, ElasticBusinessBase, BusinessBaseRouter, Auth, Sql, MySql, SqlHelper, ListParameters, reports, toExcel, generateReport, enums, classMap, RelationshipTypes };
+export { Framework, mssql, mysql, Azure, util, httpAuth, Elastic, adapters, logger, appConfig, lookup, sqlErrorMapper, BusinessBase, responseTransformer, ElasticBusinessBase, BusinessBaseRouter, Auth, Sql, MySql, SqlHelper, ListParameters, reports, render, toExcel, generateReport, enums, classMap, RelationshipTypes };

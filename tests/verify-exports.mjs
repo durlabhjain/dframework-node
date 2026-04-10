@@ -5,13 +5,14 @@
  * Tests all the newly added exports to ensure they work correctly
  */
 
-import { 
-    Framework, 
+import {
+    Framework,
     Sql,
     MySql,
     SqlHelper,
     ListParameters,
     reports,
+    render,
     toExcel,
     generateReport,
     enums,
@@ -57,6 +58,7 @@ test('MySql class is exported', typeof MySql === 'function');
 test('SqlHelper is exported', typeof SqlHelper === 'function');
 test('ListParameters is exported', typeof ListParameters === 'function');
 test('reports is exported', typeof reports === 'object' && typeof reports.execute === 'function');
+test('render is exported', typeof render === 'function');
 test('toExcel is exported', typeof toExcel === 'function');
 test('generateReport is exported', typeof generateReport === 'function');
 test('enums is exported', typeof enums === 'object');
@@ -149,6 +151,7 @@ Promise.all([
     test('Subpath ./lib/list-parameters.js works', typeof listParams.default === 'function');
     test('Subpath ./lib/reports.mjs works', typeof reportsModule.reports === 'object');
     test('Subpath ./lib/reports.mjs exports toExcel', typeof reportsModule.toExcel === 'function');
+    test('Subpath ./lib/reports.mjs exports render', typeof reportsModule.render === 'function');
     test('Subpath ./lib/business/query-base.mjs works', typeof queryBase.default === 'function');
     test('Subpath ./lib/enums.mjs works', typeof enumsModule.default === 'object');
     
