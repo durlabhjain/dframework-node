@@ -403,6 +403,7 @@ console.log('\nTest 27: normalizeColumns error includes column name and row inde
     test('Error is thrown for invalid gzip data', caughtError instanceof Error);
     test('Error message includes column name', caughtError && caughtError.message.includes('"data"'));
     test('Error message includes row index', caughtError && caughtError.message.includes('row 0'));
+    test('Original error preserved as cause', caughtError && caughtError.cause instanceof Error);
 }
 
 // Test 28: normalizeColumns JSON parse error includes column name and row index
@@ -419,6 +420,7 @@ console.log('\nTest 28: normalizeColumns JSON parse error includes column name a
     test('Error is thrown for invalid JSON', caughtError instanceof Error);
     test('Error message includes column name', caughtError && caughtError.message.includes('"config"'));
     test('Error message includes row index', caughtError && caughtError.message.includes('row 0'));
+    test('Original SyntaxError preserved as cause', caughtError && caughtError.cause instanceof SyntaxError);
 }
 
 // Test 29: addParameters gzip throws TypeError for Buffer input
