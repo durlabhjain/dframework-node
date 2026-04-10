@@ -601,7 +601,9 @@ const workbookData = {
             columns: chartColumns
         }
     ],
-    fileName: 'Annual_Report_2024.xlsx'
+    // Note: As of v3.1.0, extension is automatically added. Pass base name without extension.
+    // Or use filePath for full control: filePath: 'Annual_Report_2024.xlsx'
+    fileName: 'Annual_Report_2024'
 };
 
 await toExcel(workbookData);
