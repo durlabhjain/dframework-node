@@ -188,7 +188,7 @@ For detailed examples and performance comparisons, see [Pattern 4a in USAGE_PATT
 The framework supports automatic compression and serialization of SQL parameters via `columnTypes`. Use the `type` property when passing parameters to automatically transform values before binding them:
 
 ```javascript
-import { enums } from 'dframework-node';
+import { enums } from '@durlabh/dframework';
 
 const { columnTypes } = enums;
 

@@ -224,7 +224,7 @@ const result5 = sql.in({
 
 ### Pattern 4b: Column Type Transformations (columnTypes)
 
-The `columnTypes` enum provides automatic transformations when binding SQL parameters or normalizing result-set columns. Three types are supported:
+Use `columnTypes` when you need to efficiently store large text blobs or complex objects in the database as compressed binary data or serialized JSON. The `columnTypes` enum provides automatic transformations when binding SQL parameters or normalizing result-set columns. Three types are supported:
 
 | Type | Description | Parameter stored as |
 |------|-------------|---------------------|
@@ -234,7 +234,7 @@ The `columnTypes` enum provides automatic transformations when binding SQL param
 
 #### Binary column suffix
 
-For `gzip` and `gzipJson` types, the database column name automatically gets a suffix (default `_Binary`) appended to it in WHERE clauses. For example, a logical column named `Memo` maps to `Memo_Binary` in the database. **The SQL parameter name is always kept as the original name** (e.g., `@Memo`), so stored procedures and hand-written SQL bind to `@Memo` regardless of the binary suffix.
+For `gzip` and `gzipJson` types, the logical column name automatically gets a suffix (default `_Binary`) appended when the framework constructs SQL column references (such as in WHERE clauses or auto-generated queries). For example, a logical column named `Memo` maps to `Memo_Binary` in the database. **The SQL parameter name is always kept as the original name** (e.g., `@Memo`), so stored procedures and hand-written SQL bind to `@Memo` regardless of the binary suffix.
 
 The suffix is controlled by the `binaryColumnSuffix` property:
 
