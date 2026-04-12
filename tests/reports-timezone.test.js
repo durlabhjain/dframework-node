@@ -8,6 +8,8 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc.js';
 import timezone from 'dayjs/plugin/timezone.js';
 import fs from 'fs-extra';
+import os from 'os';
+import path from 'path';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -41,7 +43,7 @@ async function getFirstDataRow({ rows, columns, userDateFormat, userTimezone }) 
     };
 
     // Use a temp file instead of a stream for simplicity
-    const tmpFile = `/tmp/tz-test-${Date.now()}.xlsx`;
+    const tmpFile = path.join(os.tmpdir(), `tz-test-${Date.now()}.xlsx`);
     await toExcel({ rows, columns, userDateFormat, userTimezone, filePath: tmpFile });
 
     const workbook = new ExcelJS.Workbook();
@@ -68,7 +70,7 @@ await (async () => {
     const columns = { knownCol: { title: 'Known' } };
     // unknownCol has no entry in columns → would previously throw TypeError
     try {
-        const tmpFile = `/tmp/tz-null-guard-${Date.now()}.xlsx`;
+        const tmpFile = path.join(os.tmpdir(), `tz-null-guard-${Date.now()}.xlsx`);
         await toExcel({ rows, columns, filePath: tmpFile });
         fs.unlinkSync(tmpFile);
         test('No crash when row has column key missing from columns', true);
@@ -85,7 +87,7 @@ await (async () => {
 
     // No userTimezone, no userDateFormat — should not throw and should produce a non-empty string
     try {
-        const tmpFile = `/tmp/tz-fallback-${Date.now()}.xlsx`;
+        const tmpFile = path.join(os.tmpdir(), `tz-fallback-${Date.now()}.xlsx`);
         await toExcel({ rows, columns, filePath: tmpFile });
         const wb = new ExcelJS.Workbook();
         await wb.xlsx.readFile(tmpFile);
@@ -108,7 +110,7 @@ await (async () => {
     const userTimezone = 'America/New_York'; // UTC-4 in March (EDT)
 
     try {
-        const tmpFile = `/tmp/tz-conversion-${Date.now()}.xlsx`;
+        const tmpFile = path.join(os.tmpdir(), `tz-conversion-${Date.now()}.xlsx`);
         await toExcel({ rows, columns, userDateFormat, userTimezone, filePath: tmpFile });
         const wb = new ExcelJS.Workbook();
         await wb.xlsx.readFile(tmpFile);
@@ -134,7 +136,7 @@ await (async () => {
     const userTimezone = 'America/New_York';
 
     try {
-        const tmpFile = `/tmp/tz-hyperlink-${Date.now()}.xlsx`;
+        const tmpFile = path.join(os.tmpdir(), `tz-hyperlink-${Date.now()}.xlsx`);
         await toExcel({ rows, columns, userDateFormat, userTimezone, filePath: tmpFile });
         const wb = new ExcelJS.Workbook();
         await wb.xlsx.readFile(tmpFile);
@@ -161,8 +163,8 @@ await (async () => {
     const userTimezone = 'America/New_York';
 
     try {
-        const tmpLocalized = `/tmp/tz-numfmt-localized-${Date.now()}.xlsx`;
-        const tmpNotLocalized = `/tmp/tz-numfmt-normal-${Date.now()}.xlsx`;
+        const tmpLocalized = path.join(os.tmpdir(), `tz-numfmt-localized-${Date.now()}.xlsx`);
+        const tmpNotLocalized = path.join(os.tmpdir(), `tz-numfmt-normal-${Date.now()}.xlsx`);
         await toExcel({ rows, columns: columnsLocalized, userDateFormat, userTimezone, filePath: tmpLocalized });
         await toExcel({ rows, columns: columnsNotLocalized, userDateFormat, filePath: tmpNotLocalized });
         const wbLoc = new ExcelJS.Workbook();
