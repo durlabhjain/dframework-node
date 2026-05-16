@@ -270,3 +270,159 @@ test("applyShadowColumns: handles multiple shadow columns", () => {
     const result = sql.applyShadowColumns('FullName ASC, Email DESC, CreatedOn ASC');
     assert.equal(result, 'FullName_Shadow ASC, Email_Lower DESC, CreatedOn ASC');
 });
+
+// ---------------------------------------------------------------------------
+// applyCaseInsensitive — 'ilike-fn' mode (StarRocks function-call syntax)
+// ---------------------------------------------------------------------------
+
+test("applyCaseInsensitive 'ilike-fn': '=' operator returns statementTemplate with = 1", () => {
+    const sql = makeSql({ caseInsensitiveMode: 'ilike-fn', dataTypes: new Sql().dataTypes });
+    const result = sql.applyCaseInsensitive({ fieldName: 'Name', value: '%DOH%', operator: '=' });
+    assert.equal(result.statementTemplate, 'ILIKE(Name, {param}) = 1');
+    assert.equal(result.value, '%DOH%');
+});
+
+test("applyCaseInsensitive 'ilike-fn': 'LIKE' operator returns statementTemplate with = 1", () => {
+    const sql = makeSql({ caseInsensitiveMode: 'ilike-fn', dataTypes: new Sql().dataTypes });
+    const result = sql.applyCaseInsensitive({ fieldName: 'Name', value: '%DOH%', operator: 'LIKE' });
+    assert.equal(result.statementTemplate, 'ILIKE(Name, {param}) = 1');
+});
+
+test("applyCaseInsensitive 'ilike-fn': '!=' operator returns statementTemplate with = 0", () => {
+    const sql = makeSql({ caseInsensitiveMode: 'ilike-fn', dataTypes: new Sql().dataTypes });
+    const result = sql.applyCaseInsensitive({ fieldName: 'Name', value: 'DOH', operator: '!=' });
+    assert.equal(result.statementTemplate, 'ILIKE(Name, {param}) = 0');
+});
+
+test("applyCaseInsensitive 'ilike-fn': 'NOT LIKE' operator returns statementTemplate with = 0", () => {
+    const sql = makeSql({ caseInsensitiveMode: 'ilike-fn', dataTypes: new Sql().dataTypes });
+    const result = sql.applyCaseInsensitive({ fieldName: 'Name', value: '%DOH%', operator: 'NOT LIKE' });
+    assert.equal(result.statementTemplate, 'ILIKE(Name, {param}) = 0');
+});
+
+test("applyCaseInsensitive 'ilike-fn': unrecognised operator falls through unchanged", () => {
+    const sql = makeSql({ caseInsensitiveMode: 'ilike-fn', dataTypes: new Sql().dataTypes });
+    const result = sql.applyCaseInsensitive({ fieldName: 'Age', value: 5, operator: '>' });
+    assert.equal(result.fieldName, 'Age');
+    assert.equal(result.operator, '>');
+    assert.equal(result.value, 5);
+    assert.ok(!result.statementTemplate);
+});
+
+// ---------------------------------------------------------------------------
+// addParameters with 'ilike-fn' mode
+// ---------------------------------------------------------------------------
+
+test("addParameters with 'ilike-fn' mode: builds ILIKE(field, @param) = 1 for '=' operator", () => {
+    const sql = makeSql({ forceCaseInsensitive: true, caseInsensitiveMode: 'ilike-fn' });
+    const request = createMockRequest();
+    const query = sql.addParameters({
+        query: 'SELECT 1',
+        request,
+        parameters: { Name: { value: '%DOH%' } },
+        forWhere: true
+    });
+    assert.ok(query.includes('ILIKE(Name, @Name) = 1'), `Expected ILIKE fn syntax in: ${query}`);
+    assert.ok(!query.includes('UPPER('), `Should not contain UPPER(): ${query}`);
+    assert.equal(request.parameters['Name'].value, '%DOH%');
+});
+
+test("addParameters with 'ilike-fn' mode: builds ILIKE(field, @param) = 0 for '!=' operator", () => {
+    const sql = makeSql({ forceCaseInsensitive: true, caseInsensitiveMode: 'ilike-fn' });
+    const request = createMockRequest();
+    const query = sql.addParameters({
+        query: 'SELECT 1',
+        request,
+        parameters: { Name: { operator: '!=', value: 'DOH' } },
+        forWhere: true
+    });
+    assert.ok(query.includes('ILIKE(Name, @Name) = 0'), `Expected ILIKE fn negation in: ${query}`);
+});
+
+test("addParameters with 'ilike-fn' mode: LIKE becomes ILIKE fn for contains-style filter", () => {
+    const sql = makeSql({ forceCaseInsensitive: true, caseInsensitiveMode: 'ilike-fn' });
+    const request = createMockRequest();
+    const query = sql.addParameters({
+        query: 'SELECT 1',
+        request,
+        parameters: { Name: { operator: 'LIKE', value: '%DOH%' } },
+        forWhere: true
+    });
+    assert.ok(query.includes('ILIKE(Name, @Name) = 1'), `Expected ILIKE fn syntax in: ${query}`);
+});
+
+test("addParameters with 'ilike-fn' mode: dotted param name uses last segment as @param", () => {
+    const sql = makeSql({ forceCaseInsensitive: true, caseInsensitiveMode: 'ilike-fn' });
+    const request = createMockRequest();
+    const query = sql.addParameters({
+        query: 'SELECT 1',
+        request,
+        parameters: { 'Location.Name': { value: '%DOH%' } },
+        forWhere: true
+    });
+    assert.ok(query.includes('ILIKE(Location.Name, @Name) = 1'), `Expected ILIKE fn with dotted field in: ${query}`);
+});
+
+test("addParameters with 'ilike-fn' mode: date fields are not transformed", () => {
+    const sql = makeSql({ forceCaseInsensitive: true, caseInsensitiveMode: 'ilike-fn' });
+    const request = createMockRequest();
+    const query = sql.addParameters({
+        query: 'SELECT 1',
+        request,
+        parameters: { CreatedOn: { value: '2024-01-15', type: 'date' } },
+        forWhere: true
+    });
+    assert.ok(!query.includes('ILIKE('), `Date field should not use ILIKE fn: ${query}`);
+});
+
+// ---------------------------------------------------------------------------
+// applyOrderByCaseInsensitive
+// ---------------------------------------------------------------------------
+
+test("applyOrderByCaseInsensitive: returns field unchanged when caseInsensitiveOrderBy is false", () => {
+    const sql = makeSql({ caseInsensitiveOrderBy: false });
+    assert.equal(sql.applyOrderByCaseInsensitive('Name'), 'Name');
+});
+
+test("applyOrderByCaseInsensitive: wraps field with UPPER() when caseInsensitiveOrderBy is true", () => {
+    const sql = makeSql({ caseInsensitiveOrderBy: true });
+    assert.equal(sql.applyOrderByCaseInsensitive('Name'), 'UPPER(Name)');
+});
+
+test("applyOrderByCaseInsensitive: wraps field with UPPER() when caseInsensitiveOrderBy is 'upper'", () => {
+    const sql = makeSql({ caseInsensitiveOrderBy: 'upper' });
+    assert.equal(sql.applyOrderByCaseInsensitive('Name'), 'UPPER(Name)');
+});
+
+test("applyOrderByCaseInsensitive: custom function is called and its return value used", () => {
+    const customFn = (field) => `LOWER(${field})`;
+    const sql = makeSql({ caseInsensitiveOrderBy: customFn });
+    assert.equal(sql.applyOrderByCaseInsensitive('Name'), 'LOWER(Name)');
+});
+
+// ---------------------------------------------------------------------------
+// setConfig picks up caseInsensitiveOrderBy
+// ---------------------------------------------------------------------------
+
+test("setConfig sets caseInsensitiveOrderBy to true", async () => {
+    const sql = new Sql();
+    sql.createPoolConnection = async () => null;
+    await sql.setConfig({ caseInsensitiveOrderBy: true });
+    assert.equal(sql.caseInsensitiveOrderBy, true);
+});
+
+test("setConfig sets caseInsensitiveOrderBy to false explicitly", async () => {
+    const sql = new Sql();
+    sql.createPoolConnection = async () => null;
+    sql.caseInsensitiveOrderBy = true; // set beforehand
+    await sql.setConfig({ caseInsensitiveOrderBy: false });
+    assert.equal(sql.caseInsensitiveOrderBy, false);
+});
+
+test("setConfig does not override caseInsensitiveOrderBy when not provided", async () => {
+    const sql = new Sql();
+    sql.caseInsensitiveOrderBy = true;
+    sql.createPoolConnection = async () => null;
+    await sql.setConfig({});
+    assert.equal(sql.caseInsensitiveOrderBy, true);
+});
