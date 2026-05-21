@@ -24,6 +24,45 @@ test('formatSqlQueryForLog prints DECLARE statements and readable SQL', () => {
     assert.ok(formattedQuery.endsWith(query));
 });
 
+test('formatSqlQueryForLog renders TVP as DECLARE + INSERT statements (not JSON)', () => {
+    const request = new mssql.Request();
+    const tvp = new mssql.Table('dbo.StringList');
+    tvp.columns.add('Value', mssql.VarChar(500), { nullable: false });
+    tvp.rows.add('Alpha');
+    tvp.rows.add("Bob's Item");
+    request.input('ListParam', tvp);
+    request.input('Id', mssql.Int, 7);
+
+    const query = 'SELECT *\nFROM dbo.Users\tWHERE UserId = @Id';
+    const formattedQuery = formatSqlQueryForLog({ query, parameters: request.parameters });
+
+    assert.match(formattedQuery, /DECLARE @ListParam \[dbo\]\.\[StringList\]/);
+    assert.match(formattedQuery, /INSERT INTO @ListParam \(\[Value\]\) VALUES/);
+    assert.match(formattedQuery, /\('Alpha'\),\n\('Bob''s Item'\);/);
+    assert.match(formattedQuery, /DECLARE @Id INT = 7/);
+    assert.ok(!formattedQuery.includes('"columns"'));
+    assert.ok(!formattedQuery.includes('"rows"'));
+    assert.ok(formattedQuery.endsWith(query));
+});
+
+test('TVP INSERT statements are batched at 100 rows', () => {
+    const request = new mssql.Request();
+    const tvp = new mssql.Table('dbo.IntList');
+    tvp.columns.add('Value', mssql.Int, { nullable: false });
+    tvp.columns.add('Sequence', mssql.Int, { nullable: false });
+    for (let i = 1; i <= 101; i++) {
+        tvp.rows.add(i, i);
+    }
+    request.input('Ids', tvp);
+
+    const formattedQuery = formatSqlQueryForLog({ query: 'SELECT 1', parameters: request.parameters });
+
+    const insertStatementCount = (formattedQuery.match(/INSERT INTO @Ids/g) || []).length;
+    assert.strictEqual(insertStatementCount, 2);
+    assert.match(formattedQuery, /\(100, 100\)/);
+    assert.match(formattedQuery, /\(101, 101\)/);
+});
+
 test('createQueryLogger logs formatted multiline SQL when threshold is exceeded', async () => {
     const calls = [];
     const logger = {
