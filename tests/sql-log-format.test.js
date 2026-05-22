@@ -79,7 +79,8 @@ test('createQueryLogger logs formatted multiline SQL when threshold is exceeded'
     });
 
     assert.strictEqual(calls.length, 1);
-    assert.strictEqual(calls[0][0].duration, 100);
+    assert.strictEqual(calls[0][0].duration, '100ms');
+    assert.strictEqual(calls[0][0].durationMs, 100);
     assert.strictEqual(calls[0][0].dialect, 'mssql');
     assert.match(calls[0][0].formattedQuery, /DECLARE @Id INT = 5/);
     assert.match(calls[0][1], /SQL query duration 100ms/);
@@ -111,7 +112,8 @@ test('slow-query and error log sites use formatted SQL output', async () => {
     }
 
     assert.strictEqual(warnCalls.length, 1);
-    assert.strictEqual(warnCalls[0][0].executionTime, 900);
+    assert.strictEqual(warnCalls[0][0].executionTime, '900ms');
+    assert.strictEqual(warnCalls[0][0].executionTimeMs, 900);
     assert.strictEqual(warnCalls[0][0].type, 'query');
     assert.match(warnCalls[0][0].formattedQuery, /DECLARE @Id INT = 5/);
     assert.match(warnCalls[0][1], /Query execution exceeded 500 milliseconds/);
@@ -135,6 +137,9 @@ test('slow-query and error log sites use formatted SQL output', async () => {
     assert.strictEqual(errorCalls.length, 1);
     assert.strictEqual(errorCalls[0][0].err, expectedError);
     assert.strictEqual(errorCalls[0][0].type, 'query');
+    assert.strictEqual(errorCalls[0][0].query, query);
+    assert.match(errorCalls[0][0].formattedQuery, /DECLARE @Id INT = 5/);
+    assert.strictEqual(errorCalls[0][0].parameters.Id.value, 5);
     assert.match(errorCalls[0][1], /SQL query failed/);
     assert.match(errorCalls[0][1], /DECLARE @Id INT = 5/);
     assert.ok(errorCalls[0][1].includes('\nFROM Users\tWHERE Id = @Id'));
@@ -168,4 +173,63 @@ test('createQueryLogger preserves raw SQL formatting for mysql dialect', async (
     assert.strictEqual(calls[0][0].dialect, 'mysql');
     assert.strictEqual(calls[0][0].formattedQuery, 'SELECT * FROM users WHERE id = :id');
     assert.ok(!calls[0][1].includes('DECLARE @'));
+});
+
+test('formatSqlQueryForLog uses safe default lengths when MSSQL parameter length is omitted', () => {
+    const formattedQuery = formatSqlQueryForLog({
+        query: 'SELECT @Name, @Code',
+        parameters: {
+            Name: { type: mssql.VarChar, value: 'Alpha' },
+            Code: { type: mssql.Char, value: 'AB' }
+        }
+    });
+
+    assert.match(formattedQuery, /DECLARE @Name VARCHAR\(MAX\) = 'Alpha'/);
+    assert.match(formattedQuery, /DECLARE @Code CHAR\(2\) = 'AB'/);
+});
+
+test('structured logs summarize TVPs and keep mysql slow-query SQL raw', () => {
+    const tvp = new mssql.Table('dbo.IntList');
+    tvp.columns.add('Value', mssql.Int, { nullable: false });
+    tvp.rows.add(1);
+    tvp.rows.add(2);
+
+    const durationCalls = [];
+    const durationLogger = { warn: (...args) => durationCalls.push(args) };
+    const queryLogger = createQueryLogger({ queryLogThreshold: 1, timeoutLogLevel: 'warn', logger: durationLogger });
+
+    return Promise.resolve(queryLogger({
+        query: 'SELECT * FROM dbo.Users WHERE Id IN (SELECT Value FROM @Ids)',
+        start: 0,
+        end: 25,
+        parameters: {
+            Ids: { name: 'Ids', value: tvp }
+        }
+    })).then(() => {
+        assert.deepStrictEqual(durationCalls[0][0].parameters.Ids, {
+            type: '[dbo].[IntList]',
+            columns: ['Value'],
+            rowCount: 2
+        });
+
+        const warnCalls = [];
+        const mysqlLogger = { warn: (...args) => warnCalls.push(args) };
+        const sql = new Sql();
+        const originalDateNow = Date.now;
+        Date.now = () => 1000;
+        try {
+            sql.logSlowQuery({
+                startTime: 100,
+                query: 'SELECT * FROM users WHERE id = :id',
+                type: 'query',
+                request: { _logger: mysqlLogger, params: { id: 5 } }
+            });
+        } finally {
+            Date.now = originalDateNow;
+        }
+
+        assert.strictEqual(warnCalls[0][0].dialect, 'mysql');
+        assert.strictEqual(warnCalls[0][0].formattedQuery, 'SELECT * FROM users WHERE id = :id');
+        assert.ok(!warnCalls[0][1].includes('DECLARE @'));
+    });
 });
