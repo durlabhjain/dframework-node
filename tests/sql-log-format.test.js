@@ -18,7 +18,7 @@ test('formatSqlQueryForLog prints DECLARE statements and readable SQL', () => {
 
     assert.match(formattedQuery, /DECLARE @Id INT = 5/);
     assert.match(formattedQuery, /DECLARE @Name VARCHAR\(20\) = 'O''Brien'/);
-    assert.match(formattedQuery, /DECLARE @CreatedOn DATETIME2 = '2025-01-02 03:04:05\.678'/);
+    assert.match(formattedQuery, /DECLARE @CreatedOn DATETIME2 = '2025-01-02 03:04:05\.678Z'/);
     assert.match(formattedQuery, /DECLARE @IsActive BIT = 1/);
     assert.match(formattedQuery, /DECLARE @OptionalValue INT = NULL/);
     assert.ok(formattedQuery.endsWith(query));
@@ -79,9 +79,11 @@ test('createQueryLogger logs formatted multiline SQL when threshold is exceeded'
     });
 
     assert.strictEqual(calls.length, 1);
-    assert.match(calls[0][0], /SQL query duration 100ms/);
-    assert.match(calls[0][0], /DECLARE @Id INT = 5/);
-    assert.ok(calls[0][0].includes('\nFROM Users\tWHERE Id = @Id'));
+    assert.strictEqual(calls[0][0].duration, 100);
+    assert.strictEqual(calls[0][0].dialect, 'mssql');
+    assert.match(calls[0][0].formattedQuery, /DECLARE @Id INT = 5/);
+    assert.match(calls[0][1], /SQL query duration 100ms/);
+    assert.ok(calls[0][1].includes('\nFROM Users\tWHERE Id = @Id'));
 });
 
 test('slow-query and error log sites use formatted SQL output', async () => {
@@ -109,9 +111,11 @@ test('slow-query and error log sites use formatted SQL output', async () => {
     }
 
     assert.strictEqual(warnCalls.length, 1);
-    assert.match(warnCalls[0][0], /Query execution exceeded 500 milliseconds/);
-    assert.match(warnCalls[0][0], /DECLARE @Id INT = 5/);
-    assert.ok(warnCalls[0][0].includes('\nFROM Users\tWHERE Id = @Id'));
+    assert.strictEqual(warnCalls[0][0].executionTime, 900);
+    assert.strictEqual(warnCalls[0][0].type, 'query');
+    assert.match(warnCalls[0][0].formattedQuery, /DECLARE @Id INT = 5/);
+    assert.match(warnCalls[0][1], /Query execution exceeded 500 milliseconds/);
+    assert.ok(warnCalls[0][1].includes('\nFROM Users\tWHERE Id = @Id'));
 
     const expectedError = new Error('forced failure');
     const result = await sql.runQuery({
@@ -134,4 +138,34 @@ test('slow-query and error log sites use formatted SQL output', async () => {
     assert.match(errorCalls[0][1], /SQL query failed/);
     assert.match(errorCalls[0][1], /DECLARE @Id INT = 5/);
     assert.ok(errorCalls[0][1].includes('\nFROM Users\tWHERE Id = @Id'));
+});
+
+test('formatSqlQueryForLog safely handles bigint and unserializable values', () => {
+    const circular = {};
+    circular.self = circular;
+    const query = formatSqlQueryForLog({
+        query: 'SELECT @Big, @Circular',
+        parameters: {
+            Big: { type: mssql.BigInt, value: 9007199254740993n },
+            Circular: { value: circular }
+        }
+    });
+    assert.match(query, /DECLARE @Big BIGINT = 9007199254740993/);
+    assert.match(query, /DECLARE @Circular NVARCHAR\(MAX\) = '\[Unserializable:/);
+});
+
+test('createQueryLogger preserves raw SQL formatting for mysql dialect', async () => {
+    const calls = [];
+    const logger = { warn: (...args) => calls.push(args) };
+    const queryLogger = createQueryLogger({ queryLogThreshold: 1, timeoutLogLevel: 'warn', logger, dialect: 'mysql' });
+    await queryLogger({
+        query: 'SELECT * FROM users WHERE id = :id',
+        start: 10,
+        end: 20,
+        parameters: { id: 5 }
+    });
+    assert.strictEqual(calls.length, 1);
+    assert.strictEqual(calls[0][0].dialect, 'mysql');
+    assert.strictEqual(calls[0][0].formattedQuery, 'SELECT * FROM users WHERE id = :id');
+    assert.ok(!calls[0][1].includes('DECLARE @'));
 });
