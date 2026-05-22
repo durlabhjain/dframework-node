@@ -222,7 +222,7 @@ test('structured logs summarize TVPs and keep mysql slow-query SQL raw', () => {
                 startTime: 100,
                 query: 'SELECT * FROM users WHERE id = :id',
                 type: 'query',
-                request: { _logger: mysqlLogger, params: { id: 5 } }
+                request: { _logger: mysqlLogger, _sqlDialect: 'mysql', params: { id: 5 } }
             });
         } finally {
             Date.now = originalDateNow;
