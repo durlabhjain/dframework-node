@@ -453,6 +453,32 @@ await framework.setMySql({
 });
 ```
 
+## Case-Insensitive Filtering and Sorting
+
+DFramework supports configurable case-insensitive WHERE conditions and ORDER BY wrapping. The key options passed to `setConfig` are:
+
+| Option | Default | Description |
+|---|---|---|
+| `forceCaseInsensitive` | `false` | Master switch — must be `true` to enable any transformation |
+| `caseInsensitiveMode` | `'upper'` | `'upper'` · `'ilike'` · `'ilike-fn'` · custom function |
+| `caseInsensitiveOrderBy` | `false` | `false` · `true`/`'upper'` · custom function |
+| `shadowColumns` | `null` | Map column → pre-computed sort column |
+
+**Quick example for StarRocks:**
+
+```js
+await mysql.setConfig({
+    host: '...', user: '...', password: '...', database: '...',
+    namedPlaceholders: true,
+
+    forceCaseInsensitive: true,
+    caseInsensitiveMode: 'ilike-fn',   // generates: ILIKE(Name, :Name) = 1
+    caseInsensitiveOrderBy: false,     // ORDER BY unchanged (default)
+});
+```
+
+See [Case-Insensitive Search](CASE_INSENSITIVE_SEARCH.md) for the full guide covering all modes, ORDER BY options, troubleshooting, and complete examples for MSSQL, MySQL, StarRocks, and PostgreSQL.
+
 ## References
 
 - [MSSQL Node.js Driver Documentation](https://github.com/tediousjs/node-mssql)

@@ -7,6 +7,7 @@ This library is to facilate using Spraxa's DFramework related applications via N
 - [API Reference](docs/API_REFERENCE.md) - Complete reference for business objects, filtering, and multi-select columns
 - [Usage Patterns](docs/USAGE_PATTERNS.md) - Comprehensive guide with common usage patterns and examples
 - [Database Configuration](docs/DATABASE_CONFIGURATION.md) - Connection pooling, best practices, and configuration examples
+- [Case-Insensitive Search](docs/CASE_INSENSITIVE_SEARCH.md) - Configure UPPER, ILIKE, ILIKE-fn (StarRocks), and custom modes for WHERE and ORDER BY
 - [Batch Operations](docs/BATCH_OPERATIONS.md) - Efficient batch INSERT, UPDATE, DELETE operations with examples
 - [ElasticSearch Queries](docs/ELASTICSEARCH_QUERIES.md) - SQL and Search API queries with pagination and memory optimization
 - [New Exports](docs/NEW_EXPORTS.md) - Documentation on newly available exports
