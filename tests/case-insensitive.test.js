@@ -166,6 +166,27 @@ test("addParameters with UPPER mode: wraps field in UPPER() (existing behaviour)
     assert.equal(request.parameters['UserName'].value, 'JOHN');
 });
 
+test("addParameters with UPPER mode: preserves wildcard pattern for contains/startsWith/endsWith style LIKE values", () => {
+    const sql = makeSql({ forceCaseInsensitive: true, caseInsensitiveMode: 'upper' });
+    const request = createMockRequest();
+    const query = sql.addParameters({
+        query: 'SELECT 1',
+        request,
+        parameters: {
+            Contains: { fieldName: 'UserName', operator: 'LIKE', value: '%jo%' },
+            StartsWith: { fieldName: 'UserName', operator: 'LIKE', value: 'jo%' },
+            EndsWith: { fieldName: 'UserName', operator: 'LIKE', value: '%jo' }
+        },
+        forWhere: true
+    });
+    assert.ok(query.includes('UPPER(UserName) LIKE @Contains'));
+    assert.ok(query.includes('UPPER(UserName) LIKE @StartsWith'));
+    assert.ok(query.includes('UPPER(UserName) LIKE @EndsWith'));
+    assert.equal(request.parameters.Contains.value, '%JO%');
+    assert.equal(request.parameters.StartsWith.value, 'JO%');
+    assert.equal(request.parameters.EndsWith.value, '%JO');
+});
+
 test("addParameters with custom function: custom transformation is applied", () => {
     const customFn = ({ fieldName, value, operator }) => ({
         fieldName: `LOWER(${fieldName})`,
@@ -195,6 +216,19 @@ test("addParameters with ILIKE mode: date fields are not transformed", () => {
     });
     assert.ok(!query.includes('ILIKE'), `Date field should not use ILIKE: ${query}`);
     assert.ok(!query.includes('UPPER('), `Date field should not use UPPER(): ${query}`);
+});
+
+test("addParameters with forceCaseInsensitive: does not transform non-WHERE values", () => {
+    const sql = makeSql({ forceCaseInsensitive: true, caseInsensitiveMode: 'upper' });
+    const request = createMockRequest();
+    const query = sql.addParameters({
+        query: 'SELECT 1',
+        request,
+        parameters: { UserName: { value: 'john' } },
+        forWhere: false
+    });
+    assert.equal(query, 'SELECT 1');
+    assert.equal(request.parameters['UserName'].value, 'john');
 });
 
 // ---------------------------------------------------------------------------

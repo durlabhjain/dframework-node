@@ -63,7 +63,7 @@ await sql.setConfig({
 Generated WHERE clause for a "contains" filter on `Name`:
 
 ```sql
-WHERE UPPER(Main.Name) LIKE :Name   -- value is '%SEARCHTERM%' (uppercased)
+WHERE UPPER(Main.Name) LIKE @Name   -- value is '%SEARCHTERM%' (uppercased)
 ```
 
 ### StarRocks — `ILIKE()` function syntax
