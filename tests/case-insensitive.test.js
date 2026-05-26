@@ -218,6 +218,32 @@ test("addParameters with ILIKE mode: date fields are not transformed", () => {
     assert.ok(!query.includes('UPPER('), `Date field should not use UPPER(): ${query}`);
 });
 
+test("addParameters with ILIKE mode: numeric fields are not transformed", () => {
+    const sql = makeSql({ forceCaseInsensitive: true, caseInsensitiveMode: 'ilike' });
+    const request = createMockRequest();
+    const query = sql.addParameters({
+        query: 'SELECT 1',
+        request,
+        parameters: { Age: { value: 30 } },
+        forWhere: true
+    });
+    assert.ok(!query.includes('ILIKE'), `Numeric field should not use ILIKE: ${query}`);
+    assert.equal(request.parameters['Age'].value, 30);
+});
+
+test("addParameters with 'ilike-fn' mode: numeric fields are not transformed", () => {
+    const sql = makeSql({ forceCaseInsensitive: true, caseInsensitiveMode: 'ilike-fn' });
+    const request = createMockRequest();
+    const query = sql.addParameters({
+        query: 'SELECT 1',
+        request,
+        parameters: { Age: { value: 30 } },
+        forWhere: true
+    });
+    assert.ok(!query.includes('ILIKE('), `Numeric field should not use ILIKE fn: ${query}`);
+    assert.equal(request.parameters['Age'].value, 30);
+});
+
 test("addParameters with forceCaseInsensitive: does not transform non-WHERE values", () => {
     const sql = makeSql({ forceCaseInsensitive: true, caseInsensitiveMode: 'upper' });
     const request = createMockRequest();

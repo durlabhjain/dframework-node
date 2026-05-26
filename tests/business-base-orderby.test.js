@@ -29,34 +29,36 @@ function createBoWithSql(sql) {
     };
 }
 
-test('list sanitizes ORDER BY direction token to ASC/DESC only', async () => {
-    const { bo, getCapturedQuery } = createBoWithSql({
-        addParameters: ({ query }) => query,
-        applyShadowColumns: (field) => field,
-        applyOrderByCaseInsensitive: (field) => `UPPER(${field})`,
+test('BusinessBase ORDER BY behaviour', { concurrency: 1 }, async (t) => {
+    await t.test('list sanitizes ORDER BY direction token to ASC/DESC only', async () => {
+        const { bo, getCapturedQuery } = createBoWithSql({
+            addParameters: ({ query }) => query,
+            applyShadowColumns: (field) => field,
+            applyOrderByCaseInsensitive: (field) => `UPPER(${field})`,
+        });
+
+        await bo.list({ sort: 'Name DESC OFFSET 1 ROWS', limit: 0, returnCount: false });
+        const query = getCapturedQuery();
+
+        assert.ok(query.includes('ORDER BY UPPER(Name) DESC'));
+        assert.ok(!query.includes('OFFSET 1 ROWS'), `Unexpected injected token in ORDER BY: ${query}`);
     });
 
-    await bo.list({ sort: 'Name DESC OFFSET 1 ROWS', limit: 0, returnCount: false });
-    const query = getCapturedQuery();
+    await t.test('list does not wrap substituted shadow sort fields', async () => {
+        let applyOrderByCaseInsensitiveCallCount = 0;
+        const { bo, getCapturedQuery } = createBoWithSql({
+            addParameters: ({ query }) => query,
+            applyShadowColumns: (field) => field === 'Name' ? 'Name_Shadow' : field,
+            applyOrderByCaseInsensitive: (field) => {
+                applyOrderByCaseInsensitiveCallCount += 1;
+                return `UPPER(${field})`;
+            },
+        });
 
-    assert.ok(query.includes('ORDER BY UPPER(Name) DESC'));
-    assert.ok(!query.includes('OFFSET 1 ROWS'), `Unexpected injected token in ORDER BY: ${query}`);
-});
+        await bo.list({ sort: 'Name ASC', limit: 0, returnCount: false });
+        const query = getCapturedQuery();
 
-test('list does not wrap substituted shadow sort fields', async () => {
-    let applyOrderByCaseInsensitiveCallCount = 0;
-    const { bo, getCapturedQuery } = createBoWithSql({
-        addParameters: ({ query }) => query,
-        applyShadowColumns: (field) => field === 'Name' ? 'Name_Shadow' : field,
-        applyOrderByCaseInsensitive: (field) => {
-            applyOrderByCaseInsensitiveCallCount += 1;
-            return `UPPER(${field})`;
-        },
+        assert.ok(query.includes('ORDER BY Name_Shadow ASC'));
+        assert.equal(applyOrderByCaseInsensitiveCallCount, 0);
     });
-
-    await bo.list({ sort: 'Name ASC', limit: 0, returnCount: false });
-    const query = getCapturedQuery();
-
-    assert.ok(query.includes('ORDER BY Name_Shadow ASC'));
-    assert.equal(applyOrderByCaseInsensitiveCallCount, 0);
 });
