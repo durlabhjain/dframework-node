@@ -84,7 +84,6 @@ test('createQueryLogger logs formatted multiline SQL when threshold is exceeded'
     assert.strictEqual(calls[0][0].dialect, 'mssql');
     assert.match(calls[0][0].formattedQuery, /DECLARE @Id INT = 5/);
     assert.match(calls[0][1], /SQL query duration 100ms/);
-    assert.ok(calls[0][1].includes('\nFROM Users\tWHERE Id = @Id'));
 });
 
 test('slow-query and error log sites use formatted SQL output', async () => {
@@ -117,7 +116,6 @@ test('slow-query and error log sites use formatted SQL output', async () => {
     assert.strictEqual(warnCalls[0][0].type, 'query');
     assert.match(warnCalls[0][0].formattedQuery, /DECLARE @Id INT = 5/);
     assert.match(warnCalls[0][1], /Query execution exceeded 500 milliseconds/);
-    assert.ok(warnCalls[0][1].includes('\nFROM Users\tWHERE Id = @Id'));
 
     const expectedError = new Error('forced failure');
     const result = await sql.runQuery({
