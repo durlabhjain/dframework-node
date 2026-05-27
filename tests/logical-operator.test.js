@@ -22,6 +22,8 @@ function createMockRequest() {
 let passed = 0;
 let failed = 0;
 
+const WHERE_PATTERN = /\bWHERE\b/g;
+
 function test(name, condition, extra = '') {
     if (condition) {
         console.log(`✓ ${name}`);
@@ -96,7 +98,7 @@ console.log('\nTest 4: appendAnd=true appends AND instead of WHERE');
         forWhere: true,
         appendAnd: true
     });
-    test('Query does not add a second WHERE', (result.match(/\bWHERE\b/g) || []).length === 1, result);
+    test('Query does not add a second WHERE', (result.match(WHERE_PATTERN) || []).length === 1, result);
     test('New condition joined with AND', / AND a =/.test(result), result);
 }
 
@@ -113,7 +115,7 @@ console.log('\nTest 5: appendAnd=true with OR wraps group in parentheses');
         logicalOperator: 'OR',
         appendAnd: true
     });
-    test('Only one WHERE keyword', (result.match(/\bWHERE\b/g) || []).length === 1, result);
+    test('Only one WHERE keyword', (result.match(WHERE_PATTERN) || []).length === 1, result);
     test('OR group wrapped in parens and joined with AND', / AND \(/.test(result), result);
     test('Conditions joined with OR inside parens', result.includes(' OR '), result);
 }
