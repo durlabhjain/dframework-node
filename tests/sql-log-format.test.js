@@ -139,8 +139,7 @@ test('slow-query and error log sites use formatted SQL output', async () => {
     assert.match(errorCalls[0][0].formattedQuery, /DECLARE @Id INT = 5/);
     assert.strictEqual(errorCalls[0][0].parameters.Id.value, 5);
     assert.match(errorCalls[0][1], /SQL query failed/);
-    assert.match(errorCalls[0][1], /DECLARE @Id INT = 5/);
-    assert.ok(errorCalls[0][1].includes('\nFROM Users\tWHERE Id = @Id'));
+    assert.strictEqual(errorCalls[0][1], 'SQL query failed');
 });
 
 test('formatSqlQueryForLog safely handles bigint and unserializable values', () => {
@@ -229,5 +228,34 @@ test('structured logs summarize TVPs and keep mysql slow-query SQL raw', () => {
         assert.strictEqual(warnCalls[0][0].dialect, 'mysql');
         assert.strictEqual(warnCalls[0][0].formattedQuery, 'SELECT * FROM users WHERE id = :id');
         assert.ok(!warnCalls[0][1].includes('DECLARE @'));
+    });
+});
+
+test('summarizeParametersForLog uses descriptor name and JSON-safe scalar values', () => {
+    const calls = [];
+    const log = { error: (...args) => calls.push(args) };
+    const sql = new Sql();
+    const circular = {};
+    circular.self = circular;
+
+    return sql.runQuery({
+        request: {
+            _logger: log,
+            parameters: {
+                Alias: { name: 'ActualAlias', type: mssql.Int, value: 9 },
+                BigValue: { type: mssql.BigInt, value: 9007199254740993n },
+                Circular: { value: circular }
+            },
+            query: async () => {
+                throw new Error('boom');
+            }
+        },
+        type: 'query',
+        query: 'SELECT 1'
+    }).then(() => {
+        assert.ok(calls[0][0].parameters.ActualAlias);
+        assert.strictEqual(calls[0][0].parameters.Alias, undefined);
+        assert.strictEqual(calls[0][0].parameters.BigValue.value, '9007199254740993');
+        assert.strictEqual(calls[0][0].parameters.Circular.value.self, '[Circular]');
     });
 });
