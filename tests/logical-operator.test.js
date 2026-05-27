@@ -178,5 +178,74 @@ console.log('\nTest 8: logicalOperator is case-insensitive');
     test('Lowercase "or" is accepted', result.includes(' OR '), result);
 }
 
+// Test 9: appendAnd=true inserts before ORDER BY and trailing semicolon
+console.log('\nTest 9: appendAnd=true inserts before ORDER BY and trailing semicolon');
+{
+    const sql = new Sql();
+    const request = createMockRequest();
+    const result = sql.addParameters({
+        query: 'SELECT 1 FROM T WHERE IsDeleted = 0 ORDER BY Name;',
+        request,
+        parameters: { a: { value: 1 } },
+        forWhere: true,
+        appendAnd: true
+    });
+    test('Condition is inserted before ORDER BY', result.includes('WHERE IsDeleted = 0 AND a = @a ORDER BY Name'), result);
+    test('Trailing semicolon is preserved', result.endsWith('ORDER BY Name;'), result);
+}
+
+// Test 10: appendAnd=true inserts before GROUP BY / HAVING
+console.log('\nTest 10: appendAnd=true inserts before GROUP BY / HAVING');
+{
+    const sql = new Sql();
+    const request = createMockRequest();
+    const result = sql.addParameters({
+        query: 'SELECT Type, COUNT(*) FROM T WHERE IsDeleted = 0 GROUP BY Type HAVING COUNT(*) > 1',
+        request,
+        parameters: { a: { value: 1 } },
+        forWhere: true,
+        appendAnd: true
+    });
+    test('Condition is inserted before GROUP BY', result.includes('WHERE IsDeleted = 0 AND a = @a GROUP BY Type HAVING COUNT(*) > 1'), result);
+}
+
+// Test 11: appendAnd=true inserts before OFFSET / FETCH
+console.log('\nTest 11: appendAnd=true inserts before OFFSET / FETCH');
+{
+    const sql = new Sql();
+    const request = createMockRequest();
+    const result = sql.addParameters({
+        query: 'SELECT 1 FROM T WHERE IsDeleted = 0 OFFSET 10 ROWS FETCH NEXT 5 ROWS ONLY',
+        request,
+        parameters: { a: { value: 1 } },
+        forWhere: true,
+        appendAnd: true
+    });
+    test('Condition is inserted before OFFSET', result.includes('WHERE IsDeleted = 0 AND a = @a OFFSET 10 ROWS FETCH NEXT 5 ROWS ONLY'), result);
+}
+
+// Test 12: appendAnd=true without an existing WHERE throws
+console.log('\nTest 12: appendAnd=true without WHERE throws an error');
+{
+    const sql = new Sql();
+    const request = createMockRequest();
+    let threw = false;
+    let errMsg = '';
+    try {
+        sql.addParameters({
+            query: 'SELECT 1 FROM T',
+            request,
+            parameters: { a: { value: 1 } },
+            forWhere: true,
+            appendAnd: true
+        });
+    } catch (e) {
+        threw = true;
+        errMsg = e.message;
+    }
+    test('Throws when appendAnd query has no WHERE', threw, errMsg);
+    test('Error message mentions existing WHERE clause', errMsg.includes('existing WHERE clause'), errMsg);
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 if (failed > 0) process.exit(1);
