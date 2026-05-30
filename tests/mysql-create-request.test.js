@@ -51,6 +51,8 @@ test('Each createRequest returns a fresh independent object with its own params'
     const req1 = mysql2.createRequest();
     const req2 = mysql2.createRequest();
 
+    assert.strictEqual(req1._sqlDialect, 'mysql');
+    assert.strictEqual(req2._sqlDialect, 'mysql');
     req1.params['a'] = 1;
     assert.strictEqual(req2.params['a'], undefined);
 });
