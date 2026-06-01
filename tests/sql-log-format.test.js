@@ -86,6 +86,54 @@ test('createQueryLogger logs formatted multiline SQL when threshold is exceeded'
     assert.match(calls[0][1], /SQL query duration 100ms/);
 });
 
+test('createQueryLogger never lets logging failures affect the caller', async () => {
+    const invalidLogLevelLogger = createQueryLogger({ queryLogThreshold: 1, timeoutLogLevel: 'warn', logger: {} });
+    assert.doesNotThrow(() => invalidLogLevelLogger({
+        query: 'SELECT 1',
+        start: 0,
+        end: 10,
+        parameters: buildParameters()
+    }));
+
+    const throwingParameters = new Proxy({}, {
+        ownKeys() {
+            throw new Error('bad params');
+        }
+    });
+
+    const throwingLogger = createQueryLogger({
+        queryLogThreshold: 1,
+        timeoutLogLevel: 'warn',
+        logger: {
+            warn() {
+                throw new Error('log failure');
+            }
+        }
+    });
+
+    assert.doesNotThrow(() => throwingLogger({
+        query: 'SELECT 1',
+        start: 0,
+        end: 10,
+        parameters: buildParameters()
+    }));
+
+    assert.doesNotThrow(() => invalidLogLevelLogger({
+        query: 'SELECT 1',
+        start: 0,
+        end: 10,
+        parameters: throwingParameters
+    }));
+
+    const sql = new Sql();
+    const proxiedQuery = sql.createProxy(async function (query) {
+        return { query };
+    }, invalidLogLevelLogger);
+
+    const result = await proxiedQuery.call({ parameters: throwingParameters }, 'SELECT 1');
+    assert.deepStrictEqual(result, { query: 'SELECT 1' });
+});
+
 test('slow-query and error log sites use formatted SQL output', async () => {
     const warnCalls = [];
     const errorCalls = [];
