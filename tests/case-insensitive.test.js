@@ -257,6 +257,23 @@ test("addParameters with forceCaseInsensitive: does not transform non-WHERE valu
     assert.equal(request.parameters['UserName'].value, 'john');
 });
 
+test("addParameters with IS NULL/IS NOT NULL: builds null checks without binding parameters", () => {
+    const sql = makeSql();
+    const request = createMockRequest();
+    const query = sql.addParameters({
+        query: 'SELECT 1',
+        request,
+        parameters: {
+            DeletedOn: { operator: 'IS NULL', value: null },
+            UpdatedOn: { operator: 'IS NOT NULL', value: null }
+        },
+        forWhere: true
+    });
+    assert.ok(query.includes('DeletedOn IS NULL'));
+    assert.ok(query.includes('UpdatedOn IS NOT NULL'));
+    assert.equal(Object.keys(request.parameters).length, 0);
+});
+
 // ---------------------------------------------------------------------------
 // setConfig picks up caseInsensitiveMode and shadowColumns
 // ---------------------------------------------------------------------------
