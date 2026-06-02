@@ -132,6 +132,13 @@ test('createQueryLogger never lets logging failures affect the caller', async ()
 
     const result = await proxiedQuery.call({ parameters: throwingParameters }, 'SELECT 1');
     assert.deepStrictEqual(result, { query: 'SELECT 1' });
+
+    const proxiedExecute = sql.createProxy(async function (query) {
+        return { query };
+    }, invalidLogLevelLogger, { callType: 'execute' });
+
+    const executeResult = await proxiedExecute.call({ parameters: throwingParameters }, 'dbo.GetUsers');
+    assert.deepStrictEqual(executeResult, { query: 'dbo.GetUsers' });
 });
 
 test('createProxy logs executable EXEC statement for execute calls', async () => {
