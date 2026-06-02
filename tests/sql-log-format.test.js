@@ -134,6 +134,39 @@ test('createQueryLogger never lets logging failures affect the caller', async ()
     assert.deepStrictEqual(result, { query: 'SELECT 1' });
 });
 
+test('createProxy logs executable EXEC statement for execute calls', async () => {
+    const calls = [];
+    const logger = { warn: (...args) => calls.push(args) };
+    const queryLogger = createQueryLogger({ queryLogThreshold: -1, timeoutLogLevel: 'warn', logger });
+    const sql = new Sql();
+    const proxiedExecute = sql.createProxy(async function (query) {
+        return { query };
+    }, queryLogger, { callType: 'execute' });
+
+    await proxiedExecute.call({ parameters: buildParameters() }, 'dbo.GetUsers');
+
+    assert.strictEqual(calls.length, 1);
+    assert.match(calls[0][0].formattedQuery, /EXEC dbo\.GetUsers @Id = @Id, @Name = @Name, @CreatedOn = @CreatedOn, @IsActive = @IsActive, @OptionalValue = @OptionalValue/);
+});
+
+test('createRequest passes execute callType to createProxy for request.execute', () => {
+    const sql = new Sql();
+    const proxyOptions = [];
+    const request = {
+        query: async () => ({}),
+        execute: async () => ({})
+    };
+    sql.pool = { request: () => request };
+    sql.createProxy = (originalFunction, queryLogger, options) => {
+        proxyOptions.push(options);
+        return originalFunction;
+    };
+
+    sql.createRequest();
+
+    assert.deepStrictEqual(proxyOptions, [undefined, { callType: 'execute' }]);
+});
+
 test('slow-query and error log sites use formatted SQL output', async () => {
     const warnCalls = [];
     const errorCalls = [];
