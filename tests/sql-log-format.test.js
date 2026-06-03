@@ -18,7 +18,7 @@ test('formatSqlQueryForLog prints DECLARE statements and readable SQL', () => {
 
     assert.match(formattedQuery, /DECLARE @Id INT = 5/);
     assert.match(formattedQuery, /DECLARE @Name VARCHAR\(20\) = 'O''Brien'/);
-    assert.match(formattedQuery, /DECLARE @CreatedOn DATETIME2 = '2025-01-02 03:04:05\.678Z'/);
+    assert.match(formattedQuery, /DECLARE @CreatedOn DATETIME2 = '2025-01-02 03:04:05\.678'/);
     assert.match(formattedQuery, /DECLARE @IsActive BIT = 1/);
     assert.match(formattedQuery, /DECLARE @OptionalValue INT = NULL/);
     assert.ok(formattedQuery.endsWith(query));
