@@ -87,8 +87,7 @@ test('createQueryLogger logs formatted multiline SQL when threshold is exceeded'
 });
 
 test('createQueryLogger never lets logging failures affect the caller', async () => {
-    const invalidLogLevelLogger = createQueryLogger({ queryLogThreshold: 1, timeoutLogLevel: 'warn', logger: {} });
-    assert.doesNotThrow(() => invalidLogLevelLogger({
+    await assert.doesNotReject(invalidLogLevelLogger({
         query: 'SELECT 1',
         start: 0,
         end: 10,
