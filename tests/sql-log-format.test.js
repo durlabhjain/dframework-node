@@ -110,7 +110,7 @@ test('createQueryLogger never lets logging failures affect the caller', async ()
         }
     });
 
-    assert.doesNotThrow(() => throwingLogger({
+    await assert.doesNotReject(throwingLogger({
         query: 'SELECT 1',
         start: 0,
         end: 10,
