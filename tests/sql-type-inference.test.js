@@ -36,6 +36,13 @@ test('inferSqlType: whole numbers outside Int32 range map to BigInt', () => {
     assert.equal(sqlType.type, mssql.BigInt);
 });
 
+test('inferSqlType: bigint values always map to BigInt, regardless of magnitude', () => {
+    assert.equal(inferSqlType(5n), mssql.BigInt);
+    assert.equal(inferSqlType(-30000n), mssql.BigInt);
+    assert.equal(inferSqlType(9007199254740993n), mssql.BigInt);
+    assert.equal(inferSqlType(-9007199254740993n), mssql.BigInt);
+});
+
 test('inferSqlType: never infers TinyInt/SmallInt for a lone scalar (avoids plan-cache fragmentation)', () => {
     for (const n of [1, 5, 200, 500]) {
         const sqlType = typeOf(inferSqlType(n));
@@ -101,6 +108,22 @@ test('inferBatchSqlType: batch with a large value widens to Int', () => {
 test('inferBatchSqlType: scans every row, not just the first (fractional value later in the batch)', () => {
     const sqlType = typeOf(inferBatchSqlType([1, 2, 3.5]));
     assert.equal(sqlType.type, mssql.Decimal);
+});
+
+test('inferBatchSqlType: any bigint in the batch narrows to BigInt, even when every value is small', () => {
+    const sqlType = inferBatchSqlType([1, 2, 5n]);
+    assert.equal(sqlType, mssql.BigInt);
+});
+
+test('inferBatchSqlType: bigint mixed with a fractional number still maps to Decimal', () => {
+    const sqlType = typeOf(inferBatchSqlType([1, 2, 3.5, 4n]));
+    assert.equal(sqlType.type, mssql.Decimal);
+});
+
+test('inferBatchSqlType: large batches do not overflow the call stack computing min/max', () => {
+    const large = Array.from({ length: 200000 }, (_, i) => i);
+    const sqlType = inferBatchSqlType(large);
+    assert.equal(sqlType, mssql.Int);
 });
 
 test('inferBatchSqlType: scans every row for strings (non-ASCII later in the batch)', () => {
