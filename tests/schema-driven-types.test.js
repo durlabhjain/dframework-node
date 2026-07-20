@@ -204,6 +204,42 @@ test('discoverColumnTypes: normalizes table name variants to the same cache entr
     assert.equal(queryCount, 1);
 });
 
+test('_parseTableName: takes the last two dot segments as schema/table, discarding leading database/server segments', () => {
+    const sql = makeSql();
+    assert.deepEqual(sql._parseTableName('Users'), { schema: 'dbo', name: 'Users', key: 'dbo.Users' });
+    assert.deepEqual(sql._parseTableName('dbo.Users'), { schema: 'dbo', name: 'Users', key: 'dbo.Users' });
+    assert.deepEqual(sql._parseTableName('MyDb.dbo.Users'), { schema: 'dbo', name: 'Users', key: 'dbo.Users' });
+    assert.deepEqual(sql._parseTableName('Server.MyDb.dbo.Users'), { schema: 'dbo', name: 'Users', key: 'dbo.Users' });
+});
+
+test('discoverColumnTypes: a database-qualified table name resolves schema/table correctly, not schema="MyDb" name="dbo"', async () => {
+    const sql = makeSql();
+    const inputs = mockDiscovery(sql, [
+        makeInformationSchemaRow({ columnName: 'Age', dataType: 'int' })
+    ]);
+    await sql.discoverColumnTypes('MyDb.dbo.Users');
+    const schemaInput = inputs.find((i) => i.name === 'schema');
+    const tableInput = inputs.find((i) => i.name === 'tableName');
+    assert.equal(schemaInput.value, 'dbo');
+    assert.equal(tableInput.value, 'Users');
+});
+
+test('discoverColumnTypes: database-qualified and schema-qualified variants of the same table share a cache entry', async () => {
+    const sql = makeSql();
+    let queryCount = 0;
+    sql.createRequest = () => ({
+        input: () => {},
+        query: async () => {
+            queryCount++;
+            return { recordset: [makeInformationSchemaRow({ columnName: 'Age', dataType: 'int' })] };
+        }
+    });
+    await sql.discoverColumnTypes('dbo.Users');
+    await sql.discoverColumnTypes('MyDb.dbo.Users');
+    await sql.discoverColumnTypes('Server.MyDb.dbo.Users');
+    assert.equal(queryCount, 1);
+});
+
 test('resolveColumnSqlType: uses the schema warmed by a prior discoverColumnTypes call', async () => {
     const sql = makeSql({ schemaDrivenTypes: true });
     mockDiscovery(sql, [
