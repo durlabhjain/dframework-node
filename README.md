@@ -503,7 +503,7 @@ The framework uses [Pino](https://getpino.io/) v10+ for high-performance, asynch
 - `provider` (string): Which backend to format/send logs for — `"exceptionHandler"` (default, legacy `ExceptionHandler.ashx`-style form post) or `"openobserve"` ([OpenObserve](https://openobserve.ai/) JSON ingest)
 - `url` (string): Full ingest URL, including org/stream/endpoint suffix for OpenObserve (e.g. `.../api/<org-token>/<stream>/_multi`)
 - `username`, `password` (string): Basic auth credentials — **required** when `provider` is `"openobserve"`
-- `bodyType` (string, `"openobserve"` only): `"ndjson"` (default) sends one raw JSON object per request for OpenObserve's `_multi` endpoint; `"json"` wraps the record in an array for the `_json` endpoint
+- `bodyType` (string, `"openobserve"` only): `"ndjson"` (default) sends newline-delimited JSON (one JSON object per line) for OpenObserve's `_multi` endpoint; `"json"` wraps records in a JSON array for the `_json` endpoint
 - `app`, `environment`, `appVersion` (string, `"openobserve"` only): static tags stamped onto every record (e.g. `app: "playbook-backend"`, `environment: "prod"`)
 
 **prettyPrint:**
