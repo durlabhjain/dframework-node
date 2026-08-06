@@ -68,8 +68,8 @@ This document describes the changes made to modernize the logging system from `f
 
 ### Reliability
 - **Graceful shutdown**: Logs are flushed on process exit
-- **Disconnect handling**: Worker threads handle network/disk issues
-- **Built-in retry**: pino-roll handles transient failures
+- **Explicit HTTP failures**: Remote transport now surfaces non-2xx responses instead of silently ignoring them
+- **Batching support**: OpenObserve transport can batch records to reduce per-request overhead under heavy logging
 
 ### Maintainability
 - **Modern API**: Uses pino v10+ best practices
