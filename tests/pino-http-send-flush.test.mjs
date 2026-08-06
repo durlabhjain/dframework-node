@@ -51,9 +51,11 @@ const sampleLog = (msg) => ({
     batchSize: 3,
   });
 
-  await writeLinesAndClose(stream, [sampleLog('first'), sampleLog('second'), sampleLog('third')]);
-
-  globalThis.fetch = originalFetch;
+  try {
+    await writeLinesAndClose(stream, [sampleLog('first'), sampleLog('second'), sampleLog('third')]);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 
   test('no buildBatchRequest: sends one request per buffered log (no data loss)', calls.length === 3);
   test('no buildBatchRequest: preserves each log body distinctly', calls.every((body, i) => body.includes(['first', 'second', 'third'][i])));
