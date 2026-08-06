@@ -61,7 +61,7 @@ const singleRecord = JSON.parse(singleRequest.body);
 
 test('single request uses basic auth header', singleRequest.headers.Authorization === 'Basic ' + Buffer.from('user:pass').toString('base64'));
 test('single request stamps app metadata', singleRecord.app === 'dframework' && singleRecord.environment === 'test' && singleRecord.app_version === '1.2.3');
-test('single request merges params and body', singleRecord.parameters === JSON.stringify({ id: 5, filter: 'active' }));
+test('single request merges params and body', JSON.stringify(singleRecord.parameters) === JSON.stringify({ id: 5, filter: 'active' }));
 
 const batchRequest = buildBatchRequest([sampleLog, { ...sampleLog, msg: 'again' }], options, context);
 const ndjsonLines = batchRequest.body.split('\n');
