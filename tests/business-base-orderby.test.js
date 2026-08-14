@@ -14,12 +14,11 @@ function createBoWithSql(sql) {
     BusinessBase.businessObject = {
         sql: {
             ...sql,
-            createRequest: () => ({
-                query: async (query) => {
-                    capturedQuery = query;
-                    return { recordset: [] };
-                }
-            })
+            createRequest: () => ({}),
+            runQuery: async ({ query }) => {
+                capturedQuery = query;
+                return { recordsets: [[]] };
+            }
         }
     };
 
