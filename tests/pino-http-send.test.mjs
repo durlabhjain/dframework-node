@@ -60,8 +60,22 @@ const singleRequest = buildRequest(sampleLog, options, context);
 const singleRecord = JSON.parse(singleRequest.body);
 
 test('single request uses basic auth header', singleRequest.headers.Authorization === 'Basic ' + Buffer.from('user:pass').toString('base64'));
-test('single request stamps app metadata', singleRecord.app === 'dframework' && singleRecord.environment === 'test' && singleRecord.app_version === '1.2.3');
+test('single request stamps app metadata', singleRecord.application_name === 'Dframework' && singleRecord.environment === 'Test' && singleRecord.app_version === '1.2.3');
 test('single request merges params and body', JSON.stringify(singleRecord.parameters) === JSON.stringify({ id: 5, filter: 'active' }));
+test('single request sends utc_date', singleRecord.utc_date === '2026-08-04T00:00:00.000Z');
+test('single request maps level to severity name', singleRecord.severity === 'Error');
+
+const customLevelContext = createRequestContext({ ...options, customLevels: { slow: 35 } });
+const customLevelRecord = JSON.parse(buildRequest({ ...sampleLog, level: 35 }, options, customLevelContext).body);
+test('custom level maps to its configured severity name', customLevelRecord.severity === 'Slow');
+
+const unknownLevelRecord = JSON.parse(buildRequest({ ...sampleLog, level: 999 }, options, context).body);
+test('unrecognized level defaults severity to Error', unknownLevelRecord.severity === 'Error');
+
+const { level: _omittedLevel, ...logWithoutLevel } = sampleLog;
+const noLevelRecord = JSON.parse(buildRequest(logWithoutLevel, options, context).body);
+test('missing level is excluded from the record', !('level' in noLevelRecord));
+test('missing level still defaults severity to Error', noLevelRecord.severity === 'Error');
 
 const batchRequest = buildBatchRequest([sampleLog, { ...sampleLog, msg: 'again' }], options, context);
 const ndjsonLines = batchRequest.body.split('\n');

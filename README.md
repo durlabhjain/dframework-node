@@ -504,7 +504,8 @@ The framework uses [Pino](https://getpino.io/) v10+ for high-performance, asynch
 - `url` (string): Full ingest URL, including org/stream/endpoint suffix for OpenObserve (e.g. `.../api/<org-token>/<stream>/_multi`)
 - `username`, `password` (string): Basic auth credentials — **required** when `provider` is `"openobserve"`
 - `bodyType` (string, `"openobserve"` only): `"ndjson"` (default) sends newline-delimited JSON (one JSON object per line) for OpenObserve's `_multi` endpoint; `"json"` wraps records in a JSON array for the `_json` endpoint
-- `app`, `environment`, `appVersion` (string, `"openobserve"` only): static tags stamped onto every record (e.g. `app: "playbook-backend"`, `environment: "prod"`)
+- `app`, `environment`, `appVersion` (string, `"openobserve"` only): static tags stamped onto every record (sent as `application_name`, `environment`, `app_version`; e.g. `app: "playbook-backend"`, `environment: "prod"`)
+- `customLevels` (object, `"openobserve"` only): numeric level → name map for severity labeling (e.g. `{ "slow": 35, "clienterror": 45 }`); defaults to the top-level `customLevels` config when the dframework `logger` is used
 
 **prettyPrint:**
 - `translateTime` (string): Time format for console output
