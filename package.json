@@ -28,6 +28,7 @@
     "./sql": "./lib/sql.js",
     "./mysql-class": "./lib/mysql.js",
     "./business/sql-helper": "./lib/business/sql-helper.mjs",
+    "./business/row-grouping": "./lib/business/row-grouping.mjs",
     "./list-parameters": "./lib/list-parameters.js",
     "./reports": "./lib/reports.mjs",
     "./business/query-base": "./lib/business/query-base.mjs",
