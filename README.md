@@ -616,3 +616,67 @@ You can override any of these defaults by specifying them in the configuration:
   }
 }
 ```
+
+## Server-Side Row Grouping
+
+`BusinessBase.list()` supports grouping leaf rows under a single field, with the group summary (child count, and any aggregates) computed by the database instead of by loading every row into the client. This is the backend half of the contract [`@durlabh/dframework-ui`'s Grid `isServerGrouping`](https://github.com/durlabhjain/dframework-ui#server-side-row-grouping) consumes - use it when a grid's row count is too large for client-side grouping to be practical.
+
+### Enabling it
+
+Pass `rowGroupField` (and optionally `rowGroupAggregations`) to `list()` - typically forwarded straight from the request:
+
+```js
+const result = await someBusinessObject.list({
+    start: 0,
+    limit: 50,
+    rowGroupField: 'MarketName',
+    rowGroupAggregations: { Revenue: 'sum', ShareOfShelf: 'avg' }
+});
+```
+
+- `rowGroupField` - a single output column of the list query to group by. This is single-field, one-level grouping only.
+- `rowGroupAggregations` - `{ field: 'sum' | 'avg' | 'min' | 'max' | 'count' }`, one entry per aggregate to compute over each group's full (filtered) row set.
+
+### What comes back
+
+`result.records` is the normal page of leaf rows, with one **group-summary row** spliced in directly ahead of the first leaf row of each group value present on that page:
+
+```json
+{
+  "records": [
+    { "MarketName": "Test KPI", "childrenCount": 2, "Revenue": 1560 },
+    { "AssetId": 101, "MarketName": "Test KPI", "Revenue": 820 },
+    { "AssetId": 102, "MarketName": "Test KPI", "Revenue": 740 },
+    { "MarketName": "North Region", "childrenCount": 1, "Revenue": 300 },
+    { "AssetId": 103, "MarketName": "North Region", "Revenue": 300 }
+  ],
+  "recordCount": 3
+}
+```
+
+- A summary row carries `rowGroupField`'s own value, `childrenCount` (the group's **total** leaf count across every page, not just this page - and the signal consumers use to recognize a summary row), and one field per `rowGroupAggregations` entry.
+- `recordCount` stays a count of leaf rows only, for pagination - it does not include summary rows.
+- A group with no leaf rows on the current page is dropped entirely, since pagination is defined in terms of leaf rows.
+- If `rowGroupField` isn't a real output column of the list query (or the grouped query otherwise fails), the failure is logged and `list()` degrades to plain ungrouped `records` rather than failing the whole call.
+
+### How it's scoped
+
+The group-summary query is **not** built by re-deriving client/permission/filter scoping from scratch - it wraps `list()`'s own fully-filtered query (every `WHERE` condition already applied: client scoping, `createWhere()`'s conditions, and the request's own filter items) as a derived table and runs `GROUP BY` over it, on the same `request` the leaf query used. This guarantees the summary is scoped identically to the leaf rows it summarizes, with no risk of re-declaring or re-binding a request parameter.
+
+### Using it outside `list()`
+
+A `BusinessBase` subclass that fully overrides `list()` (rather than extending the base implementation) can still reuse this logic directly via `applyServerRowGrouping`, exported at `@durlabh/dframework/business/row-grouping`:
+
+```js
+import { applyServerRowGrouping } from '@durlabh/dframework/business/row-grouping';
+
+records = await applyServerRowGrouping({
+    sql,               // this.getDatabaseAdapter()
+    request,           // the leaf query's own request object - reused, not recreated
+    query,             // the leaf query's fully-filtered, not-yet-paged SELECT text
+    records,           // the leaf rows for this page
+    rowGroupField,
+    rowGroupAggregations,
+    logger: this.logger
+});
+```
