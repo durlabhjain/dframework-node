@@ -60,9 +60,19 @@ const singleRequest = buildRequest(sampleLog, options, context);
 const singleRecord = JSON.parse(singleRequest.body);
 
 test('single request uses basic auth header', singleRequest.headers.Authorization === 'Basic ' + Buffer.from('user:pass').toString('base64'));
-test('single request stamps app metadata', singleRecord.application_name === 'Dframework' && singleRecord.environment === 'Test' && singleRecord.app_version === '1.2.3');
-test('single request merges params and body', JSON.stringify(singleRecord.parameters) === JSON.stringify({ id: 5, filter: 'active' }));
-test('single request sends utc_date', singleRecord.utc_date === '2026-08-04T00:00:00.000Z');
+test('single request stamps app metadata', singleRecord.application_name === 'dframework' && singleRecord.environment === 'test' && singleRecord.app_version === '1.2.3');
+test('single request keeps query string separate', JSON.stringify(singleRecord.query_string) === JSON.stringify({ page: 1 }));
+test('single request keeps form separate', JSON.stringify(singleRecord.form) === JSON.stringify({ id: 5 }));
+test('single request keeps body parameters separate', JSON.stringify(singleRecord.body_parameters) === JSON.stringify({ filter: 'active' }));
+test('single request does not merge params/body into stack trace', singleRecord.stack_trace === undefined || !singleRecord.stack_trace.includes('Body:'));
+
+const queryErrorRecord = JSON.parse(buildRequest({
+  ...sampleLog,
+  query: 'SELECT * FROM users',
+  err: { stack: 'Error: boom\n    at foo' },
+}, options, context).body);
+test('single request appends top-level query to stack trace', queryErrorRecord.stack_trace === 'Error: boom\n    at foo\r\nquery: SELECT * FROM users');
+test('single request sends utc_date as ISO string', singleRecord.utc_date === '2026-08-04T00:00:00.000Z');
 test('single request maps level to severity name', singleRecord.severity === 'Error');
 
 const customLevelContext = createRequestContext({ ...options, customLevels: { slow: 35 } });

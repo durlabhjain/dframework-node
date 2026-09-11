@@ -507,6 +507,11 @@ The framework uses [Pino](https://getpino.io/) v10+ for high-performance, asynch
 - `app`, `environment`, `appVersion` (string, `"openobserve"` only): static tags stamped onto every record (sent as `application_name`, `environment`, `app_version`; e.g. `app: "playbook-backend"`, `environment: "prod"`)
 - `customLevels` (object, `"openobserve"` only): numeric level → name map for severity labeling (e.g. `{ "slow": 35, "clienterror": 45 }`); defaults to the top-level `customLevels` config when the dframework `logger` is used
 
+**OpenObserve record fields:**
+- `utc_date`: log timestamp as an ISO 8601 string (e.g. `2026-08-04T00:00:00.000Z`)
+- `stack_trace`: the error's stack (or message) plus a top-level `query` field when present (e.g. a SQL query logged alongside the error) — request params/body are **not** merged in here
+- `query_string`, `form`, `body_parameters`: the HTTP request's query string (`req.query`), route params (`req.params`), and body (`req.body`), kept as separate fields
+
 **prettyPrint:**
 - `translateTime` (string): Time format for console output
 - `colorize` (boolean): Enable colored output (default: true for stdout)
