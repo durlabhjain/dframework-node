@@ -75,6 +75,33 @@ test('single request appends top-level query to stack trace', queryErrorRecord.s
 test('single request sends utc_date as ISO string', singleRecord.utc_date === '2026-08-04T00:00:00.000Z');
 test('single request maps level to severity name', singleRecord.severity === 'Error');
 
+const slowQueryRecord = JSON.parse(buildRequest({
+  level: 40,
+  time: '2026-08-04T00:00:00.000Z',
+  msg: 'Query execution exceeded 500 milliseconds (900ms) [query]',
+  query: 'SELECT * FROM Users WHERE Id = @Id',
+  formattedQuery: 'DECLARE @Id INT = 5;\nSELECT * FROM Users WHERE Id = @Id',
+  parameters: { Id: 5 },
+  executionTimeMs: 900,
+}, options, context).body);
+test('slow query with no err still gets a non-empty stack trace', slowQueryRecord.stack_trace.length > 0);
+test('slow query stack trace includes the formatted query', slowQueryRecord.stack_trace.includes('SELECT * FROM Users WHERE Id = @Id'));
+test('slow query stack trace does not repeat parameters separately', !slowQueryRecord.stack_trace.includes('"Id":5'));
+test('slow query stack trace includes the duration', slowQueryRecord.stack_trace.includes('duration: 900ms'));
+
+const slowRequestRecord = JSON.parse(buildRequest({
+  level: 50,
+  time: '2026-08-04T00:00:00.000Z',
+  msg: 'slow request',
+  durMs: 1250,
+  statusCode: 200,
+  url: '/api/v1/report',
+  method: 'GET',
+}, options, context).body);
+test('slow request with no err still gets a non-empty stack trace', slowRequestRecord.stack_trace.length > 0);
+test('slow request stack trace includes method and url', slowRequestRecord.stack_trace.includes('GET /api/v1/report'));
+test('slow request stack trace includes the duration', slowRequestRecord.stack_trace.includes('duration: 1250ms'));
+
 const customLevelContext = createRequestContext({ ...options, customLevels: { slow: 35 } });
 const customLevelRecord = JSON.parse(buildRequest({ ...sampleLog, level: 35 }, options, customLevelContext).body);
 test('custom level maps to its configured severity name', customLevelRecord.severity === 'Slow');
