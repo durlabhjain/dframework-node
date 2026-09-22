@@ -89,6 +89,20 @@ test('slow query stack trace includes the formatted query', slowQueryRecord.stac
 test('slow query stack trace does not repeat parameters separately', !slowQueryRecord.stack_trace.includes('"Id":5'));
 test('slow query stack trace includes the duration', slowQueryRecord.stack_trace.includes('duration: 900ms'));
 
+const slowQueryWithStackRecord = JSON.parse(buildRequest({
+  level: 40,
+  time: '2026-08-04T00:00:00.000Z',
+  msg: 'Query execution exceeded 500 milliseconds (900ms) [query]',
+  query: 'SELECT * FROM Users WHERE Id = @Id',
+  formattedQuery: 'DECLARE @Id INT = 5;\nSELECT * FROM Users WHERE Id = @Id',
+  parameters: { Id: 5 },
+  executionTimeMs: 900,
+  stack: 'Error: slow query trace\n    at Object.runQuery (lib/sql.js:685:27)',
+}, options, context).body);
+test('slow query with a real stack uses it verbatim', slowQueryWithStackRecord.stack_trace.startsWith('Error: slow query trace\n    at Object.runQuery (lib/sql.js:685:27)'));
+test('slow query with a real stack still appends the query', slowQueryWithStackRecord.stack_trace.includes('query: DECLARE @Id INT = 5;'));
+test('slow query with a real stack does not repeat the duration', !slowQueryWithStackRecord.stack_trace.includes('duration: 900ms'));
+
 const slowRequestRecord = JSON.parse(buildRequest({
   level: 50,
   time: '2026-08-04T00:00:00.000Z',

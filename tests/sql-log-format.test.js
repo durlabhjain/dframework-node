@@ -202,6 +202,7 @@ test('slow-query and error log sites use formatted SQL output', async () => {
     assert.strictEqual(warnCalls[0][0].executionTimeMs, 900);
     assert.strictEqual(warnCalls[0][0].type, 'query');
     assert.match(warnCalls[0][0].formattedQuery, /DECLARE @Id INT = 5/);
+    assert.strictEqual(warnCalls[0][0].stack, undefined);
     assert.match(warnCalls[0][1], /Query execution exceeded 500 milliseconds/);
 
     const expectedError = new Error('forced failure');
@@ -227,6 +228,40 @@ test('slow-query and error log sites use formatted SQL output', async () => {
     assert.strictEqual(errorCalls[0][0].parameters.Id.value, 5);
     assert.match(errorCalls[0][1], /SQL query failed/);
     assert.strictEqual(errorCalls[0][1], 'SQL query failed');
+});
+
+test('slow database query logs include a stack trace to the call site', async () => {
+    const warnCalls = [];
+    const mockLogger = {
+        warn: (...args) => warnCalls.push(args)
+    };
+    const sql = new Sql();
+    const query = 'SELECT *\nFROM Users\tWHERE Id = @Id';
+    const parameters = buildParameters();
+
+    const originalDateNow = Date.now;
+    let now = 1000;
+    Date.now = () => now;
+    try {
+        await sql.runQuery({
+            request: {
+                _logger: mockLogger,
+                parameters,
+                query: async () => {
+                    now += 501; // exceed the default 500ms slow-query threshold
+                    return { recordset: [] };
+                }
+            },
+            type: 'query',
+            query
+        });
+    } finally {
+        Date.now = originalDateNow;
+    }
+
+    assert.strictEqual(warnCalls.length, 1);
+    assert.match(warnCalls[0][0].stack, /Error: slow query trace/);
+    assert.match(warnCalls[0][0].stack, /sql-log-format\.test\.js/);
 });
 
 test('formatSqlQueryForLog safely handles bigint and unserializable values', () => {
