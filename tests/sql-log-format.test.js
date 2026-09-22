@@ -87,6 +87,7 @@ test('createQueryLogger logs formatted multiline SQL when threshold is exceeded'
 });
 
 test('createQueryLogger never lets logging failures affect the caller', async () => {
+    const invalidLogLevelLogger = createQueryLogger({ queryLogThreshold: 1, timeoutLogLevel: 'missing', logger: {} });
     await assert.doesNotReject(invalidLogLevelLogger({
         query: 'SELECT 1',
         start: 0,
@@ -202,7 +203,7 @@ test('slow-query and error log sites use formatted SQL output', async () => {
     assert.strictEqual(warnCalls[0][0].executionTimeMs, 900);
     assert.strictEqual(warnCalls[0][0].type, 'query');
     assert.match(warnCalls[0][0].formattedQuery, /DECLARE @Id INT = 5/);
-    assert.strictEqual(warnCalls[0][0].stack, undefined);
+    assert.match(warnCalls[0][0].stack, /Error: slow query trace/);
     assert.match(warnCalls[0][1], /Query execution exceeded 500 milliseconds/);
 
     const expectedError = new Error('forced failure');
@@ -275,7 +276,7 @@ test('formatSqlQueryForLog safely handles bigint and unserializable values', () 
         }
     });
     assert.match(query, /DECLARE @Big BIGINT = 9007199254740993/);
-    assert.match(query, /DECLARE @Circular NVARCHAR\(MAX\) = '\[Unserializable:/);
+    assert.match(query, /DECLARE @Circular NVARCHAR\(MAX\) = N'\[Unserializable:/);
 });
 
 test('createQueryLogger preserves raw SQL formatting for mysql dialect', async () => {

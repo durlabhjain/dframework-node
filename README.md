@@ -505,12 +505,17 @@ The framework uses [Pino](https://getpino.io/) v10+ for high-performance, asynch
 - `username`, `password` (string): Basic auth credentials — **required** when `provider` is `"openobserve"`
 - `bodyType` (string, `"openobserve"` only): `"ndjson"` (default) sends newline-delimited JSON (one JSON object per line) for OpenObserve's `_multi` endpoint; `"json"` wraps records in a JSON array for the `_json` endpoint
 - `app`, `environment`, `appVersion` (string, `"openobserve"` only): static tags stamped onto every record (sent as `application_name`, `environment`, `app_version`; e.g. `app: "playbook-backend"`, `environment: "prod"`)
-- `customLevels` (object, `"openobserve"` only): numeric level → name map for severity labeling (e.g. `{ "slow": 35, "clienterror": 45 }`); defaults to the top-level `customLevels` config when the dframework `logger` is used
+- `customLevels` (object, `"openobserve"` only): name → numeric level map for severity labeling (e.g. `{ "slow": 35, "clienterror": 45 }`); defaults to the top-level `customLevels` config when the dframework `logger` is used
 
 **OpenObserve record fields:**
-- `utc_date`: log timestamp as an ISO 8601 string (e.g. `2026-08-04T00:00:00.000Z`)
-- `stack_trace`: the error's stack (or message) plus a top-level `query` field when present (e.g. a SQL query logged alongside the error) — request params/body are **not** merged in here
-- `query_string`, `form`, `body_parameters`: the HTTP request's query string (`req.query`), route params (`req.params`), and body (`req.body`), kept as separate fields
+- `utc_date`: log timestamp in UTC (`YYYY-MM-DD hh:mm:ss A`)
+- `stack_trace`: the supplied error stack, top-level stack, or error message. No query or duration is synthesized here.
+- `details`: JSON text preserving all remaining structured log fields, including nested objects, arrays, error properties, query parameters, and durations. These fields are supplied by the caller; the provider does not interpret them.
+- `query_string`, `form`, `body`: the HTTP request's query (`req.query`), route params (`req.params`), and JSON-encoded body (`req.body`).
+
+Use Pino's structured form, `logger.warn({ firstObject, secondObject, durationMs }, 'message')`, to log multiple objects. Extra positional arguments follow Pino's message interpolation rules. The transport can preserve only data present in the serialized log record.
+
+To forward slow logs, explicitly set `otherConfig.postLevel` (for example, `"warn"` or a configured `"slow"` level) and ensure `logLevel` enables that level. Custom levels do not change the default HTTP threshold of `"error"`. With HTTP configured, all destinations receive records at or above their thresholds; this ensures file routing cannot suppress HTTP delivery.
 
 **prettyPrint:**
 - `translateTime` (string): Time format for console output
