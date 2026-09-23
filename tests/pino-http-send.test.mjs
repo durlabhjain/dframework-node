@@ -72,7 +72,8 @@ const queryErrorRecord = JSON.parse(buildRequest({
   err: { stack: 'Error: boom\n    at foo' },
 }, options, context).body);
 test('single request keeps the error stack separate', queryErrorRecord.stack_trace === 'Error: boom\n    at foo');
-test('single request preserves query and error details', JSON.parse(queryErrorRecord.details).query === 'SELECT * FROM users' && JSON.parse(queryErrorRecord.details).err.stack === queryErrorRecord.stack_trace);
+test('single request surfaces the query as its own field', queryErrorRecord.query === 'SELECT * FROM users');
+test('single request preserves error details', JSON.parse(queryErrorRecord.details).err.stack === queryErrorRecord.stack_trace);
 test('single request formats utc_date in UTC', singleRecord.utc_date === '2026-08-04 12:00:00 AM');
 test('single request maps level to severity name', singleRecord.severity === 'Error');
 
@@ -86,8 +87,10 @@ const slowQueryRecord = JSON.parse(buildRequest({
   executionTimeMs: 900,
 }, options, context).body);
 test('slow query does not synthesize a stack', slowQueryRecord.stack_trace === undefined);
+test('slow query surfaces the formatted query as its own field', slowQueryRecord.query === 'DECLARE @Id INT = 5;\nSELECT * FROM Users WHERE Id = @Id');
 const slowDetails = JSON.parse(slowQueryRecord.details);
-test('slow query preserves all supplied fields', slowDetails.query === 'SELECT * FROM Users WHERE Id = @Id' && slowDetails.formattedQuery.startsWith('DECLARE @Id') && slowDetails.parameters.Id === 5 && slowDetails.executionTimeMs === 900);
+test('slow query keeps query/formattedQuery out of details once promoted', !('query' in slowDetails) && !('formattedQuery' in slowDetails));
+test('slow query preserves remaining supplied fields', slowDetails.parameters.Id === 5 && slowDetails.executionTimeMs === 900);
 
 const slowQueryWithStackRecord = JSON.parse(buildRequest({
   level: 40,

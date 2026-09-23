@@ -34,9 +34,12 @@ for (const postLevel of [undefined, 'slow']) {
             logger.clienterror('client');
             logger.error('failure');
             logger.fatal('fatal');
-            assert.equal(httpThreshold, postLevel ?? 'error');
+            // With customLevels configured, the default postLevel auto-selects the lowest
+            // custom level below "error" (here "diagnostic"=15), so an explicit override
+            // is needed to raise the threshold back up (e.g. to "slow").
+            assert.equal(httpThreshold, postLevel ?? 'diagnostic');
             assert.deepEqual(received.get('http').map(record => record.msg),
-                postLevel ? ['slow', 'client', 'failure', 'fatal'] : ['failure', 'fatal']);
+                postLevel ? ['slow', 'client', 'failure', 'fatal'] : ['ordinary', 'slow', 'client', 'failure', 'fatal']);
             assert.ok([...received.entries()].some(([name, records]) => name.endsWith('/error.json') && records.some(record => record.msg === 'failure')));
         } finally {
             pino.transport = originalTransport;

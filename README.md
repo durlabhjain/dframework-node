@@ -497,7 +497,7 @@ The framework uses [Pino](https://getpino.io/) v10+ for high-performance, asynch
 - `logFolder` (string): Directory for log files (default: './logs')
 - `mixin` (function): Function to add custom properties to all log entries
 - `httpConfig` (object): HTTP endpoint configuration for remote logging
-- `postLevel` (string): Minimum level for HTTP transport (default: 'error')
+- `postLevel` (string): Minimum level for HTTP transport (default: `'error'`, or the lowest configured custom level below `'error'` — e.g. `'slow'` — when `customLevels` is set, so slow-query/slow-request diagnostics reach the HTTP sink without extra config)
 
 **httpConfig (remote logging providers):**
 - `provider` (string): Which backend to format/send logs for — `"exceptionHandler"` (default, legacy `ExceptionHandler.ashx`-style form post) or `"openobserve"` ([OpenObserve](https://openobserve.ai/) JSON ingest)
@@ -510,12 +510,13 @@ The framework uses [Pino](https://getpino.io/) v10+ for high-performance, asynch
 **OpenObserve record fields:**
 - `utc_date`: log timestamp in UTC (`YYYY-MM-DD hh:mm:ss A`)
 - `stack_trace`: the supplied error stack, top-level stack, or error message. No query or duration is synthesized here.
-- `details`: JSON text preserving all remaining structured log fields, including nested objects, arrays, error properties, query parameters, and durations. These fields are supplied by the caller; the provider does not interpret them.
+- `query`: the SQL query text, preferring a supplied `formattedQuery` (literal parameter values inlined) over a raw `query` field, promoted to its own searchable field instead of being buried in `details` — this is what makes slow-query logs (`lib/sql.js`) show the actual statement, not just its duration.
+- `details`: JSON text preserving all remaining structured log fields, including nested objects, arrays, error properties, and durations. `query`/`formattedQuery` are excluded here since they're promoted above. These fields are supplied by the caller; the provider does not interpret them.
 - `query_string`, `form`, `body`: the HTTP request's query (`req.query`), route params (`req.params`), and JSON-encoded body (`req.body`).
 
 Use Pino's structured form, `logger.warn({ firstObject, secondObject, durationMs }, 'message')`, to log multiple objects. Extra positional arguments follow Pino's message interpolation rules. The transport can preserve only data present in the serialized log record.
 
-To forward slow logs, explicitly set `otherConfig.postLevel` (for example, `"warn"` or a configured `"slow"` level) and ensure `logLevel` enables that level. Custom levels do not change the default HTTP threshold of `"error"`. With HTTP configured, all destinations receive records at or above their thresholds; this ensures file routing cannot suppress HTTP delivery.
+When `customLevels` includes a level below `"error"` (e.g. `slow: 35`), it becomes the HTTP sink's default threshold automatically, so slow-query and slow-request diagnostics reach OpenObserve out of the box; ensure `logLevel` also enables that level. Set `otherConfig.postLevel` explicitly to override this. With HTTP configured, all destinations receive records at or above their thresholds; this ensures file routing cannot suppress HTTP delivery.
 
 **prettyPrint:**
 - `translateTime` (string): Time format for console output
