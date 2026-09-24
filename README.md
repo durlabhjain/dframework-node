@@ -466,7 +466,7 @@ The framework uses [Pino](https://getpino.io/) v10+ for high-performance, asynch
                 "appVersion": "1.0.11",
                 "headers": {}
             },
-            "postLevel": "error"
+            "postLevel": "warn"
         },
         "prettyPrint": {
             "translateTime": "SYS:yyyy-mm-dd h:MM:ss",
@@ -482,8 +482,8 @@ The framework uses [Pino](https://getpino.io/) v10+ for high-performance, asynch
             "limit": { "count": 10 }
         },
         "customLevels": {
-            "slow": 35,
-            "clienterror": 45
+            "slow": 45,
+            "clienterror": 55
         }
     }
 }
@@ -497,7 +497,7 @@ The framework uses [Pino](https://getpino.io/) v10+ for high-performance, asynch
 - `logFolder` (string): Directory for log files (default: './logs')
 - `mixin` (function): Function to add custom properties to all log entries
 - `httpConfig` (object): HTTP endpoint configuration for remote logging
-- `postLevel` (string): Minimum level for HTTP transport (default: `'error'`, or the lowest configured custom level below `'error'` — e.g. `'slow'` — when `customLevels` is set, so slow-query/slow-request diagnostics reach the HTTP sink without extra config)
+- `postLevel` (string): Minimum level for HTTP transport (default: `'warn'`)
 
 **httpConfig (remote logging providers):**
 - `provider` (string): Which backend to format/send logs for — `"exceptionHandler"` (default, legacy `ExceptionHandler.ashx`-style form post) or `"openobserve"` ([OpenObserve](https://openobserve.ai/) JSON ingest)
@@ -505,7 +505,7 @@ The framework uses [Pino](https://getpino.io/) v10+ for high-performance, asynch
 - `username`, `password` (string): Basic auth credentials — **required** when `provider` is `"openobserve"`
 - `bodyType` (string, `"openobserve"` only): `"ndjson"` (default) sends newline-delimited JSON (one JSON object per line) for OpenObserve's `_multi` endpoint; `"json"` wraps records in a JSON array for the `_json` endpoint
 - `app`, `environment`, `appVersion` (string, `"openobserve"` only): static tags stamped onto every record (sent as `application_name`, `environment`, `app_version`; e.g. `app: "playbook-backend"`, `environment: "prod"`)
-- `customLevels` (object, `"openobserve"` only): name → numeric level map for severity labeling (e.g. `{ "slow": 35, "clienterror": 45 }`); defaults to the top-level `customLevels` config when the dframework `logger` is used
+- `customLevels` (object, `"openobserve"` only): name → numeric level map for severity labeling (e.g. `{ "slow": 45, "clienterror": 55 }`); defaults to the top-level `customLevels` config when the dframework `logger` is used
 
 **OpenObserve record fields:**
 - `utc_date`: log timestamp in UTC (`YYYY-MM-DD hh:mm:ss A`)
@@ -516,7 +516,7 @@ The framework uses [Pino](https://getpino.io/) v10+ for high-performance, asynch
 
 Use Pino's structured form, `logger.warn({ firstObject, secondObject, durationMs }, 'message')`, to log multiple objects. Extra positional arguments follow Pino's message interpolation rules. The transport can preserve only data present in the serialized log record.
 
-When `customLevels` includes a level below `"error"` (e.g. `slow: 35`), it becomes the HTTP sink's default threshold automatically, so slow-query and slow-request diagnostics reach OpenObserve out of the box; ensure `logLevel` also enables that level. Set `otherConfig.postLevel` explicitly to override this. With HTTP configured, all destinations receive records at or above their thresholds; this ensures file routing cannot suppress HTTP delivery.
+`postLevel` defaults to `"warn"`, so a custom level placed above it (e.g. `slow: 45`, between `"warn"`=40 and `"error"`=50) reaches OpenObserve out of the box; ensure `logLevel` also enables that level. Set `otherConfig.postLevel` explicitly to override the default. With HTTP configured, all destinations receive records at or above their thresholds; this ensures file routing cannot suppress HTTP delivery.
 
 **prettyPrint:**
 - `translateTime` (string): Time format for console output

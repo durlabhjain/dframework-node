@@ -11,7 +11,7 @@ for (const postLevel of [undefined, 'slow']) {
         const received = new Map();
         let httpThreshold;
         config.logging = {
-            customLevels: { diagnostic: 15, slow: 35, clienterror: 45 },
+            customLevels: { diagnostic: 15, slow: 45, clienterror: 55 },
             otherConfig: {
                 stdout: false,
                 httpConfig: { url: 'http://example.invalid' },
@@ -34,12 +34,11 @@ for (const postLevel of [undefined, 'slow']) {
             logger.clienterror('client');
             logger.error('failure');
             logger.fatal('fatal');
-            // With customLevels configured, the default postLevel auto-selects the lowest
-            // custom level below "error" (here "diagnostic"=15), so an explicit override
-            // is needed to raise the threshold back up (e.g. to "slow").
-            assert.equal(httpThreshold, postLevel ?? 'diagnostic');
+            // postLevel defaults to "warn" (40); "slow"=45 already clears that threshold, so
+            // slow-query/slow-request diagnostics reach HTTP without any override needed.
+            assert.equal(httpThreshold, postLevel ?? 'warn');
             assert.deepEqual(received.get('http').map(record => record.msg),
-                postLevel ? ['slow', 'client', 'failure', 'fatal'] : ['ordinary', 'slow', 'client', 'failure', 'fatal']);
+                ['slow', 'client', 'failure', 'fatal']);
             assert.ok([...received.entries()].some(([name, records]) => name.endsWith('/error.json') && records.some(record => record.msg === 'failure')));
         } finally {
             pino.transport = originalTransport;
