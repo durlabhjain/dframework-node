@@ -33,7 +33,7 @@ function createBo({ selectStatement, clientBased = false } = {}) {
     };
     BusinessBase.businessObject = { sql };
 
-    return { bo, getCapturedQuery: () => capturedQuery };
+    return { bo, sql, getCapturedQuery: () => capturedQuery };
 }
 
 const filterOnTwoFields = JSON.stringify([
@@ -84,5 +84,68 @@ test('BusinessBase.list WHERE assembly', { concurrency: 1 }, async (t) => {
         // instead of AND-ing onto the subquery's.
         assert.match(query, /\) Main WHERE Main\.FirstName LIKE @\w+ AND Main\.LastName LIKE @\w+/);
         assert.equal(query.match(/\bWHERE\b/g).length, 2);
+    });
+});
+
+const doesNotContainFilter = JSON.stringify([
+    { field: 'FirstName', operator: 'doesNotContain', value: 'jo', type: 'string' }
+]);
+
+test('BusinessBase.list negated string filters keep valueless rows', { concurrency: 1 }, async (t) => {
+    await t.test('doesNotContain widens NOT LIKE with an IS NULL branch', async () => {
+        const { bo, getCapturedQuery } = createBo();
+
+        await bo.list({ filter: doesNotContainFilter, limit: 0, returnCount: false });
+
+        assert.match(getCapturedQuery(), /WHERE \(Main\.FirstName IS NULL OR Main\.FirstName NOT LIKE @\w+\)/);
+    });
+
+    await t.test('notContains is the same operator under its other name', async () => {
+        const { bo, getCapturedQuery } = createBo();
+        const filter = JSON.stringify([{ field: 'FirstName', operator: 'notContains', value: 'jo', type: 'string' }]);
+
+        await bo.list({ filter, limit: 0, returnCount: false });
+
+        assert.match(getCapturedQuery(), /WHERE \(Main\.FirstName IS NULL OR Main\.FirstName NOT LIKE @\w+\)/);
+    });
+
+    await t.test('contains is left untouched', async () => {
+        const { bo, getCapturedQuery } = createBo();
+        const filter = JSON.stringify([{ field: 'FirstName', operator: 'contains', value: 'jo', type: 'string' }]);
+
+        await bo.list({ filter, limit: 0, returnCount: false });
+
+        const query = getCapturedQuery();
+        assert.match(query, /WHERE Main\.FirstName LIKE @\w+/);
+        assert.doesNotMatch(query, /IS NULL/);
+    });
+
+    await t.test("forceCaseInsensitive 'upper' tests the plain column, not the UPPER() wrapper", async () => {
+        const { bo, sql, getCapturedQuery } = createBo();
+        sql.forceCaseInsensitive = true;
+
+        await bo.list({ filter: doesNotContainFilter, limit: 0, returnCount: false });
+
+        assert.match(getCapturedQuery(), /WHERE \(Main\.FirstName IS NULL OR UPPER\(Main\.FirstName\) NOT LIKE @\w+\)/);
+    });
+
+    await t.test("forceCaseInsensitive 'ilike' keeps the IS NULL branch outside NOT ILIKE", async () => {
+        const { bo, sql, getCapturedQuery } = createBo();
+        sql.forceCaseInsensitive = true;
+        sql.caseInsensitiveMode = 'ilike';
+
+        await bo.list({ filter: doesNotContainFilter, limit: 0, returnCount: false });
+
+        assert.match(getCapturedQuery(), /WHERE \(Main\.FirstName IS NULL OR Main\.FirstName NOT ILIKE @\w+\)/);
+    });
+
+    await t.test("forceCaseInsensitive 'ilike-fn' wraps the whole function comparison", async () => {
+        const { bo, sql, getCapturedQuery } = createBo();
+        sql.forceCaseInsensitive = true;
+        sql.caseInsensitiveMode = 'ilike-fn';
+
+        await bo.list({ filter: doesNotContainFilter, limit: 0, returnCount: false });
+
+        assert.match(getCapturedQuery(), /WHERE \(Main\.FirstName IS NULL OR ILIKE\(Main\.FirstName, @\w+\) = 0\)/);
     });
 });
