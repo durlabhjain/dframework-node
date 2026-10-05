@@ -39,7 +39,8 @@ node tests/verify-exports.mjs
   directly with `node`. `auth.test.js` requires external endpoint credentials;
   `min-max.test.js` uses Jest-style globals. Neither belongs in the command above.
 - Baseline on `main` at `d864e45`: `node:test` had two failures in
-  `sql-log-format.test.js` (Unicode string literal expectations). Standalone
+  `sql-log-format.test.js` (undefined `invalidLogLevelLogger` and a Unicode
+  string literal expectation). Standalone
   `where-type.test.js` had one type-inference expectation failure and
   `pino-http-send.test.mjs` had two provider-output expectation failures.
   Reproduce baseline failures before attributing them to a change.
