@@ -19,6 +19,7 @@ function createBo({ selectStatement, clientBased = false } = {}) {
     bo.selectStatement = selectStatement || 'SELECT Main.* FROM Users Main';
 
     let capturedQuery = '';
+    const capturedQueries = [];
     let capturedRequest;
     // Real adapter, so addParameters/findOutermostToken/addPaging behave as they do in production.
     const sql = new Sql();
@@ -30,12 +31,13 @@ function createBo({ selectStatement, clientBased = false } = {}) {
     });
     sql.runQuery = async ({ query, request }) => {
         capturedQuery = query;
+        capturedQueries.push(query);
         capturedRequest = request;
-        return { recordsets: [[], [{ TotalCount: 0 }]] };
+        return { recordsets: [/SELECT COUNT\(1\) AS TotalCount/.test(query) ? [{ TotalCount: 2 }] : []] };
     };
     BusinessBase.businessObject = { sql };
 
-    return { bo, sql, getCapturedQuery: () => capturedQuery, getCapturedRequest: () => capturedRequest };
+    return { bo, sql, getCapturedQuery: () => capturedQuery, getCapturedQueries: () => capturedQueries, getCapturedRequest: () => capturedRequest };
 }
 
 const filterOnTwoFields = JSON.stringify([
@@ -107,12 +109,13 @@ test('count projection preserves the outer query and leading CTEs', () => {
 });
 
 test('paged CTE list counts the same filtered outer rows', async () => {
-    const { bo, getCapturedQuery } = createBo({
+    const { bo, getCapturedQueries } = createBo({
         selectStatement: 'WITH c AS (SELECT * FROM Users) SELECT Main.* FROM (SELECT * FROM c) Main'
     });
     await bo.list({ filter: filterOnTwoFields, limit: 10, sort: 'UserId' });
-    const query = getCapturedQuery();
-    assert.match(query, /;WITH c AS \(SELECT \* FROM Users\) SELECT COUNT\(1\) AS TotalCount FROM \(SELECT \* FROM c\) Main WHERE Main\.FirstName LIKE @filter_0 AND Main\.LastName LIKE @filter_1$/);
+    const [countQuery, dataQuery] = getCapturedQueries();
+    assert.match(countQuery, /^WITH c AS \(SELECT \* FROM Users\) SELECT COUNT\(1\) AS TotalCount FROM \(SELECT \* FROM c\) Main WHERE Main\.FirstName LIKE @filter_0 AND Main\.LastName LIKE @filter_1$/);
+    assert.match(dataQuery, /ORDER BY UserId OFFSET @z_start ROWS FETCH NEXT @z_limit ROWS ONLY;$/);
 });
 
 test('explicit null filters retain SQL NULL semantics for strings', async () => {
