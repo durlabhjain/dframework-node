@@ -222,5 +222,20 @@ for (const adapterName of ['sql', 'mysql']) {
             assert.equal(calls.length, 3);
             assert.match(calls[2].query, /AS PivotSource GROUP BY FirstName$/);
         });
+
+        await t.test('averaged group aggregates are rounded, other functions are not', async () => {
+            const { bo, calls } = createFixture(adapterName, [
+                [{ TotalCount: 1 }], [{ UserId: 1, FirstName: 'Jo' }],
+                [{ FirstName: 'Jo', childrenCount: 1, Score: 9.71, Amount: 5, Latitude: 12.3456789 }]
+            ]);
+            await bo.list({
+                rowGroupField: 'FirstName',
+                rowGroupAggregations: { Score: 'avg', Amount: 'sum', Latitude: 'max' }
+            });
+            assert.match(calls[2].query, /ROUND\(AVG\(Score\), 2\) AS Score/);
+            assert.match(calls[2].query, /SUM\(Amount\) AS Amount/);
+            assert.match(calls[2].query, /MAX\(Latitude\) AS Latitude/);
+            assert.doesNotMatch(calls[2].query, /ROUND\(SUM|ROUND\(MAX/);
+        });
     });
 }
