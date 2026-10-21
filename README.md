@@ -504,17 +504,24 @@ The framework uses [Pino](https://getpino.io/) v10+ for high-performance, asynch
 
 **httpConfig (remote logging):**
 
-Setting `httpConfig` ships logs to [OpenObserve](https://openobserve.ai/) through `lib/pino-openobserve.mjs`. Delivery is handled by [@openobserve/pino-openobserve](https://www.npmjs.com/package/@openobserve/pino-openobserve), which owns the ingest URL, Basic auth and batching:
+Setting `httpConfig` ships logs to [OpenObserve](https://openobserve.ai/) through the single-purpose `lib/pino-openobserve.mjs` transport using Node's built-in `fetch`:
 - `url` (string, required): the OpenObserve server base URL, e.g. `https://observe.stream4tech.app`
-- `organization`, `streamName` (string, required): the org token and target stream. The package posts to `<url>/api/<organization>/<streamName>/_multi`
+- `organization`, `streamName` (string, required): the org token and target stream. The transport posts NDJSON to `<url>/api/<organization>/<streamName>/_multi`
 - `auth` (object, required): `{ username, password }` for Basic auth
 - `batchSize` (number): records per request; defaults to `1` (send immediately)
-- `timeThreshold` (number): max ms a partial batch waits; defaults to 5 minutes and only applies when `batchSize` is above 1. The package restarts this timer on every record, so raise `batchSize` only for steady, high-volume logging
+- `timeThreshold` (number): max ms from the first waiting record until a partial batch is sent, subject to an in-flight request finishing; defaults to 5 minutes
+- `timeoutMs` (number): request deadline, including response-body consumption; defaults to 10 seconds. A failed/timed-out batch is reported to stderr and is not retried; later batches continue
+- `maxQueueSize` (number): maximum waiting records, excluding the one in-flight batch; defaults to 1000 and must be at least `batchSize`. Overflow drops incoming remote records and reports the count to stderr; independent file logging continues
+- `headers` (object): additional HTTP headers; Basic auth and Content-Type are set by the transport
 - `app`, `environment`, `appVersion` (string): static tags stamped onto every record (sent as `application_name`, `environment`, `app_version`)
-- `customLevels` (object): numeric level → name map for severity labeling (e.g. `{ "slow": 35, "clienterror": 45 }`); defaults to the top-level `customLevels` config when the dframework `logger` is used
+- `customLevels` (object): level name → numeric value map for severity labeling (e.g. `{ "slow": 35, "clienterror": 45 }`); defaults to the top-level `customLevels` config when the dframework `logger` is used
 - `silentSuccess`, `silentError` (boolean): `silentSuccess` defaults to `true` here so successful batches are not logged to the console
 
-`url`, `organization` and `streamName` are all required — the transport throws at startup if any is missing.
+The transport rejects missing/blank destination or credentials, non-HTTP(S) URLs, and invalid numeric limits at construction. Numeric limits must be positive integers no greater than 2147483647.
+
+Shutdown sends a partial batch immediately and drains queued/in-flight delivery for up to 5 seconds. At that deadline the active request is aborted and remaining queued records are dropped with a stderr diagnostic, so a stalled collector cannot keep the worker alive indefinitely. Remote delivery is best effort; files remain the fallback.
+
+This configuration is incompatible with the old `provider`/`bodyType` options, full ingest URLs, and top-level `username`/`password`. Migrate deployment configuration when upgrading the framework; existing ExceptionHandler destinations must move to OpenObserve rather than being silently disabled.
 
 **OpenObserve record fields:**
 - `severity`: the level name, capitalized (`Info`, `Error`, or a custom level such as `Slow`); defaults to `Error` when the line carries no level

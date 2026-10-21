@@ -78,7 +78,7 @@ test('missing level still defaults severity to Error', noLevelRecord.severity ==
 
 test('url, organization and streamName are required', throws(() => createWriteStream({ auth: { username: 'u', password: 'p' } }), /needs "url", "organization", "streamName"/));
 
-// Delivery goes through @openobserve/pino-openobserve to the _multi ingest endpoint
+// Delivery uses the OpenObserve _multi ingest endpoint
 {
   const requests = [];
   const server = http.createServer((req, res) => {
