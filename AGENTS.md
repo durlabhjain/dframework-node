@@ -41,8 +41,7 @@ node tests/verify-exports.mjs
 - Baseline on `main` at `d864e45`: `node:test` had two failures in
   `sql-log-format.test.js` (undefined `invalidLogLevelLogger` and a Unicode
   string literal expectation). Standalone
-  `where-type.test.js` had one type-inference expectation failure and
-  `pino-http-send.test.mjs` had two provider-output expectation failures.
+  `where-type.test.js` had one type-inference expectation failure.
   Reproduce baseline failures before attributing them to a change.
 - Pagination tests use actual MSSQL/MySQL query builders and `runQuery`, with
   mocked driver calls. They do **not** establish live database integration coverage.

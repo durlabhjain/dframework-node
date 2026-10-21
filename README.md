@@ -456,11 +456,14 @@ The framework uses [Pino](https://getpino.io/) v10+ for high-performance, asynch
             "logFolder": "./logs",
             "mixin": null,
             "httpConfig": {
-                "provider": "openobserve",
-                "url": "https://observe.stream4tech.app/api/<org-token>/<stream>/_multi",
-                "username": "<OBSERVE_USER>",
-                "password": "<OBSERVE_PASSWORD>",
-                "bodyType": "ndjson",
+                "url": "https://observe.stream4tech.app",
+                "organization": "<org-token>",
+                "streamName": "<stream>",
+                "auth": {
+                    "username": "<OBSERVE_USER>",
+                    "password": "<OBSERVE_PASSWORD>"
+                },
+                "batchSize": 1,
                 "app": "playbook-backend",
                 "environment": "prod",
                 "appVersion": "1.0.11",
@@ -499,18 +502,35 @@ The framework uses [Pino](https://getpino.io/) v10+ for high-performance, asynch
 - `httpConfig` (object): HTTP endpoint configuration for remote logging
 - `postLevel` (string): Minimum level for HTTP transport (default: 'error')
 
-**httpConfig (remote logging providers):**
-- `provider` (string): Which backend to format/send logs for — `"exceptionHandler"` (default, legacy `ExceptionHandler.ashx`-style form post) or `"openobserve"` ([OpenObserve](https://openobserve.ai/) JSON ingest)
-- `url` (string): Full ingest URL, including org/stream/endpoint suffix for OpenObserve (e.g. `.../api/<org-token>/<stream>/_multi`)
-- `username`, `password` (string): Basic auth credentials — **required** when `provider` is `"openobserve"`
-- `bodyType` (string, `"openobserve"` only): `"ndjson"` (default) sends newline-delimited JSON (one JSON object per line) for OpenObserve's `_multi` endpoint; `"json"` wraps records in a JSON array for the `_json` endpoint
-- `app`, `environment`, `appVersion` (string, `"openobserve"` only): static tags stamped onto every record (sent as `application_name`, `environment`, `app_version`; e.g. `app: "playbook-backend"`, `environment: "prod"`)
-- `customLevels` (object, `"openobserve"` only): numeric level → name map for severity labeling (e.g. `{ "slow": 35, "clienterror": 45 }`); defaults to the top-level `customLevels` config when the dframework `logger` is used
+**httpConfig (remote logging):**
+
+Setting `httpConfig` ships logs to [OpenObserve](https://openobserve.ai/) through the single-purpose `lib/pino-openobserve.mjs` transport using Node's built-in `fetch`:
+- `url` (string, required): the OpenObserve server base URL, e.g. `https://observe.stream4tech.app`
+- `organization`, `streamName` (string, required): the org token and target stream. The transport posts NDJSON to `<url>/api/<organization>/<streamName>/_multi`
+- `auth` (object, required): `{ username, password }` for Basic auth
+- `batchSize` (number): records per request; defaults to `1` (send immediately)
+- `timeThreshold` (number): max ms from the first waiting record until a partial batch is sent, subject to an in-flight request finishing; defaults to 5 minutes
+- `timeoutMs` (number): request deadline, including response-body consumption; defaults to 10 seconds. A failed/timed-out batch is reported to stderr and is not retried; later batches continue
+- `maxQueueSize` (number): maximum waiting records, excluding the one in-flight batch; defaults to 1000 and must be at least `batchSize`. Overflow drops incoming remote records and reports the count to stderr; independent file logging continues
+- `headers` (object): additional HTTP headers; Basic auth and Content-Type are set by the transport
+- `app`, `environment`, `appVersion` (string): static tags stamped onto every record (sent as `application_name`, `environment`, `app_version`)
+- `customLevels` (object): level name → numeric value map for severity labeling (e.g. `{ "slow": 35, "clienterror": 45 }`); defaults to the top-level `customLevels` config when the dframework `logger` is used
+- `silentSuccess`, `silentError` (boolean): `silentSuccess` defaults to `true` here so successful batches are not logged to the console
+
+The transport rejects missing/blank destination or credentials, non-HTTP(S) URLs, and invalid numeric limits at construction. Numeric limits must be positive integers no greater than 2147483647.
+
+Shutdown sends a partial batch immediately and drains queued/in-flight delivery for up to 5 seconds. At that deadline the active request is aborted and remaining queued records are dropped with a stderr diagnostic, so a stalled collector cannot keep the worker alive indefinitely. Remote delivery is best effort; files remain the fallback.
+
+This configuration is incompatible with the old `provider`/`bodyType` options, full ingest URLs, and top-level `username`/`password`. Migrate deployment configuration when upgrading the framework; existing ExceptionHandler destinations must move to OpenObserve rather than being silently disabled.
 
 **OpenObserve record fields:**
-- `utc_date`: log timestamp as an ISO 8601 string (e.g. `2026-08-04T00:00:00.000Z`)
+- `severity`: the level name, capitalized (`Info`, `Error`, or a custom level such as `Slow`); defaults to `Error` when the line carries no level
+- `application_name`, `environment`, `app_version`: the static `app`/`environment`/`appVersion` tags
+- `utc_date`: log timestamp in UTC, formatted `YYYY-MM-DD hh:mm:ss A` for OpenObserve's display (e.g. `2026-08-04 12:00:00 AM`)
 - `stack_trace`: the error's stack (or message) plus a top-level `query` field when present (e.g. a SQL query logged alongside the error) — request params/body are **not** merged in here
-- `query_string`, `form`, `body_parameters`: the HTTP request's query string (`req.query`), route params (`req.params`), and body (`req.body`), kept as separate fields
+- `query_string`, `form`, `body`: the HTTP request's query string (`req.query`), route params (`req.params`), and body (`req.body`), kept as separate fields; `body` is JSON-stringified
+- `machine_name`, `system_path`, `remote_host`, `raw_url`, `absolute_url`, `url_referrer`, `browser`, `user`: host and request context
+- Empty, `null` and `undefined` values are dropped before sending, so they are not indexed as noise
 
 **prettyPrint:**
 - `translateTime` (string): Time format for console output
