@@ -456,11 +456,14 @@ The framework uses [Pino](https://getpino.io/) v10+ for high-performance, asynch
             "logFolder": "./logs",
             "mixin": null,
             "httpConfig": {
-                "provider": "openobserve",
-                "url": "https://observe.stream4tech.app/api/<org-token>/<stream>/_multi",
-                "username": "<OBSERVE_USER>",
-                "password": "<OBSERVE_PASSWORD>",
-                "bodyType": "ndjson",
+                "url": "https://observe.stream4tech.app",
+                "organization": "<org-token>",
+                "streamName": "<stream>",
+                "auth": {
+                    "username": "<OBSERVE_USER>",
+                    "password": "<OBSERVE_PASSWORD>"
+                },
+                "batchSize": 1,
                 "app": "playbook-backend",
                 "environment": "prod",
                 "appVersion": "1.0.11",
@@ -499,18 +502,28 @@ The framework uses [Pino](https://getpino.io/) v10+ for high-performance, asynch
 - `httpConfig` (object): HTTP endpoint configuration for remote logging
 - `postLevel` (string): Minimum level for HTTP transport (default: 'error')
 
-**httpConfig (remote logging providers):**
-- `provider` (string): Which backend to format/send logs for — `"exceptionHandler"` (default, legacy `ExceptionHandler.ashx`-style form post) or `"openobserve"` ([OpenObserve](https://openobserve.ai/) JSON ingest)
-- `url` (string): Full ingest URL, including org/stream/endpoint suffix for OpenObserve (e.g. `.../api/<org-token>/<stream>/_multi`)
-- `username`, `password` (string): Basic auth credentials — **required** when `provider` is `"openobserve"`
-- `bodyType` (string, `"openobserve"` only): `"ndjson"` (default) sends newline-delimited JSON (one JSON object per line) for OpenObserve's `_multi` endpoint; `"json"` wraps records in a JSON array for the `_json` endpoint
-- `app`, `environment`, `appVersion` (string, `"openobserve"` only): static tags stamped onto every record (sent as `application_name`, `environment`, `app_version`; e.g. `app: "playbook-backend"`, `environment: "prod"`)
-- `customLevels` (object, `"openobserve"` only): numeric level → name map for severity labeling (e.g. `{ "slow": 35, "clienterror": 45 }`); defaults to the top-level `customLevels` config when the dframework `logger` is used
+**httpConfig (remote logging):**
+
+Setting `httpConfig` ships logs to [OpenObserve](https://openobserve.ai/) through `lib/pino-openobserve.mjs`. Delivery is handled by [@openobserve/pino-openobserve](https://www.npmjs.com/package/@openobserve/pino-openobserve), which owns the ingest URL, Basic auth and batching:
+- `url` (string, required): the OpenObserve server base URL, e.g. `https://observe.stream4tech.app`
+- `organization`, `streamName` (string, required): the org token and target stream. The package posts to `<url>/api/<organization>/<streamName>/_multi`
+- `auth` (object, required): `{ username, password }` for Basic auth
+- `batchSize` (number): records per request; defaults to `1` (send immediately)
+- `timeThreshold` (number): max ms a partial batch waits; defaults to 5 minutes and only applies when `batchSize` is above 1. The package restarts this timer on every record, so raise `batchSize` only for steady, high-volume logging
+- `app`, `environment`, `appVersion` (string): static tags stamped onto every record (sent as `application_name`, `environment`, `app_version`)
+- `customLevels` (object): numeric level → name map for severity labeling (e.g. `{ "slow": 35, "clienterror": 45 }`); defaults to the top-level `customLevels` config when the dframework `logger` is used
+- `silentSuccess`, `silentError` (boolean): `silentSuccess` defaults to `true` here so successful batches are not logged to the console
+
+`url`, `organization` and `streamName` are all required — the transport throws at startup if any is missing.
 
 **OpenObserve record fields:**
-- `utc_date`: log timestamp as an ISO 8601 string (e.g. `2026-08-04T00:00:00.000Z`)
+- `severity`: the level name, capitalized (`Info`, `Error`, or a custom level such as `Slow`); defaults to `Error` when the line carries no level
+- `application_name`, `environment`, `app_version`: the static `app`/`environment`/`appVersion` tags
+- `utc_date`: log timestamp in UTC, formatted `YYYY-MM-DD hh:mm:ss A` for OpenObserve's display (e.g. `2026-08-04 12:00:00 AM`)
 - `stack_trace`: the error's stack (or message) plus a top-level `query` field when present (e.g. a SQL query logged alongside the error) — request params/body are **not** merged in here
-- `query_string`, `form`, `body_parameters`: the HTTP request's query string (`req.query`), route params (`req.params`), and body (`req.body`), kept as separate fields
+- `query_string`, `form`, `body`: the HTTP request's query string (`req.query`), route params (`req.params`), and body (`req.body`), kept as separate fields; `body` is JSON-stringified
+- `machine_name`, `system_path`, `remote_host`, `raw_url`, `absolute_url`, `url_referrer`, `browser`, `user`: host and request context
+- Empty, `null` and `undefined` values are dropped before sending, so they are not indexed as noise
 
 **prettyPrint:**
 - `translateTime` (string): Time format for console output
