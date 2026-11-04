@@ -1,0 +1,11 @@
+# Dependency security — 2026-11-04
+
+This fix refreshes the existing Yarn Classic lockfile within declared dependency ranges, including fast-xml-parser, lodash, jws, fast-copy, brace-expansion and minimatch. Scoped UUID 11.1.1 and tmp 0.2.7 overrides cover ExcelJS/MSAL and retain CommonJS compatibility. npm overrides and Yarn Classic resolutions are both present because both tools are used with this repository.
+
+objects-to-csv 3 replaces its vulnerable parsing chain. Existing `toString`/`toDisk` calls remain supported, with formula escaping enabled by default. Formula-like string values receive an apostrophe; numbers retain their values. Review machine-only CSV consumers before adopting this version. The actual framework CSV response and XLSX comments/round-trip are covered by focused tests; an offline MSAL GUID check covers its UUID use.
+
+The `.npmrc` disables implicit lifecycle scripts. Use `yarn install --ignore-scripts` with Yarn Classic; do not assume Modern Yarn settings apply to Classic. Explicit test/build commands still work. These policies and root overrides protect this checkout's installation; they are not inherited by consuming applications. Runtime packages are peers, also installed as devDependencies for framework tests. Their dev flag here does not make their application runtime exposure disappear. Consumers must adopt the new CSV peer and maintain equivalent application-level resolutions.
+
+Full npm and Yarn Classic audits of the patched tree report zero vulnerabilities on Windows/Node v24.21.0. The sequential node:test suite has two existing failures in sql-log-format.test.js (undefined invalidLogLevelLogger and a Unicode SQL-literal expectation), reproduced on unchanged main with the original checkout dependencies. All other unit tests pass; export verification passes 47 checks. Database, LDAP, Azure and real SMTP integration were not run. The framework was not published or deployed, and no version tag was created.
+
+The new Oneleet scan reported 36 open dependency findings for this repository before remediation. It scans the default branch, so findings remain open until the reviewed fixes merge and a new scan verifies them. A zero local audit is not proof that every runtime input path is safe.
