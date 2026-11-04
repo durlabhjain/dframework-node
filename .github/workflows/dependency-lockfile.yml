@@ -1,0 +1,33 @@
+name: Dependency Lockfile
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    paths:
+      - 'package.json'
+      - 'yarn.lock'
+      - '.npmrc'
+      - 'tests/dependency-security.test.mjs'
+      - '.github/workflows/dependency-lockfile.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.21.0'
+      - name: Install committed dependencies
+        run: npx --yes --package=yarn@1.22.22 -- yarn install --frozen-lockfile --ignore-scripts
+      - name: Check offline dependency behavior
+        run: node --test --test-concurrency=1 tests/dependency-security.test.mjs
+      - name: Check exports
+        run: node tests/verify-exports.mjs
+      - name: Verify lockfile is unchanged
+        run: git diff --exit-code -- yarn.lock

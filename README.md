@@ -4,6 +4,14 @@ This library is to facilate using Spraxa's DFramework related applications via N
 
 ## Documentation
 
+Use Yarn Classic 1.22.22, pinned in `package.json`, with the committed `yarn.lock`.
+Install with `yarn install --frozen-lockfile --ignore-scripts`. For an intentional
+dependency update, use `yarn install --ignore-scripts` and commit the manifest and
+lock together. Keep one installer's lockfile; runtime peers are also installed as
+development dependencies for local tests, and consumers maintain their own locks.
+The dependency workflow checks a frozen install, offline dependency behavior and
+exports without starting shared services.
+
 - [API Reference](docs/API_REFERENCE.md) - Complete reference for business objects, filtering, and multi-select columns
 - [Usage Patterns](docs/USAGE_PATTERNS.md) - Comprehensive guide with common usage patterns and examples
 - [Database Configuration](docs/DATABASE_CONFIGURATION.md) - Connection pooling, best practices, and configuration examples

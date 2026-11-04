@@ -1,5 +1,6 @@
 {
   "name": "@durlabh/dframework",
+  "packageManager": "yarn@1.22.22",
   "version": "3.3.9",
   "main": "index.js",
   "license": "MIT",
