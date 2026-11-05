@@ -299,6 +299,7 @@ __metadata:
     pino-roll: "npm:^4.0.0"
     prompt: "npm:^1.3.0"
     semver: "npm:^7.7.3"
+    tar: "npm:^7.5.22"
     tough-cookie: "npm:^6.0.0"
   peerDependencies:
     "@azure/identity": ^4.13.0
@@ -372,6 +373,15 @@ __metadata:
     lodash.isundefined: "npm:^3.0.1"
     lodash.uniq: "npm:^4.5.0"
   checksum: 10c0/dfd1834bfcea2665bd9db05b21793f79fd3502abdf955d6d63f7bf9724082f0b67a6379687b2945ca8d513b4d383a7bdaeed72a03cabd9191032b81448379917
+  languageName: node
+  linkType: hard
+
+"@isaacs/fs-minipass@npm:^4.0.0":
+  version: 4.0.1
+  resolution: "@isaacs/fs-minipass@npm:4.0.1"
+  dependencies:
+    minipass: "npm:^7.0.4"
+  checksum: 10c0/c25b6dc1598790d5b55c0947a9b7d111cfa92594db5296c3b907e2f533c033666f692a3939eadac17b1c7c40d362d0b0635dc874cbfe3e70db7c2b07cc97a5d2
   languageName: node
   linkType: hard
 
@@ -871,6 +881,13 @@ __metadata:
   dependencies:
     traverse: "npm:>=0.3.0 <0.4"
   checksum: 10c0/c27b8b10fd372b07d80b3f63615ce5ecb9bb1b0be6934fe5de3bb0328f9ffad5051f206bd7a0b426b85778fee0c063a1f029fb32cc639f3b2ee38d6b39f52c5c
+  languageName: node
+  linkType: hard
+
+"chownr@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "chownr@npm:3.0.0"
+  checksum: 10c0/43925b87700f7e3893296c8e9c56cc58f926411cce3a6e5898136daaf08f08b9a8eb76d37d3267e707d0dcc17aed2e2ebdf5848c0c3ce95cf910a919935c1b10
   languageName: node
   linkType: hard
 
@@ -1732,6 +1749,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"minipass@npm:^7.0.4, minipass@npm:^7.1.2":
+  version: 7.1.3
+  resolution: "minipass@npm:7.1.3"
+  checksum: 10c0/539da88daca16533211ea5a9ee98dc62ff5742f531f54640dd34429e621955e91cc280a91a776026264b7f9f6735947629f920944e9c1558369e8bf22eb33fbb
+  languageName: node
+  linkType: hard
+
+"minizlib@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "minizlib@npm:3.1.0"
+  dependencies:
+    minipass: "npm:^7.1.2"
+  checksum: 10c0/5aad75ab0090b8266069c9aabe582c021ae53eb33c6c691054a13a45db3b4f91a7fb1bd79151e6b4e9e9a86727b522527c0a06ec7d45206b745d54cd3097bcec
+  languageName: node
+  linkType: hard
+
 "mkdirp@npm:>=0.5 0":
   version: 0.5.6
   resolution: "mkdirp@npm:0.5.6"
@@ -2293,6 +2326,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"tar@npm:^7.5.22":
+  version: 7.5.22
+  resolution: "tar@npm:7.5.22"
+  dependencies:
+    "@isaacs/fs-minipass": "npm:^4.0.0"
+    chownr: "npm:^3.0.0"
+    minipass: "npm:^7.1.2"
+    minizlib: "npm:^3.1.0"
+    yallist: "npm:^5.0.0"
+  checksum: 10c0/1311f6be85a8157ac4c9147bae43e13923d2a1aae15e4aa1bd5239e4e03d2cf53cfe103dde7f35832fbb4c938b042856bc8e9a0afd29abd05e2d1608788c4fea
+  languageName: node
+  linkType: hard
+
 "tarn@npm:^3.0.2":
   version: 3.0.2
   resolution: "tarn@npm:3.0.2"
@@ -2516,6 +2562,13 @@ __metadata:
   version: 2.0.4
   resolution: "xmlcreate@npm:2.0.4"
   checksum: 10c0/fc4234e2d1942877d761d4f3d64410b54633d2ec60b13a5d56a6a06545aba39a0df8ed7ded10785a302f632eb4f0a4fedbf4bf10e17892e11d5075244b9e5705
+  languageName: node
+  linkType: hard
+
+"yallist@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "yallist@npm:5.0.0"
+  checksum: 10c0/a499c81ce6d4a1d260d4ea0f6d49ab4da09681e32c3f0472dee16667ed69d01dae63a3b81745a24bd78476ec4fcf856114cb4896ace738e01da34b2c42235416
   languageName: node
   linkType: hard
 

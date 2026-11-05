@@ -4,6 +4,7 @@ import { cp, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/p
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { x as extract } from 'tar';
 
 // Exercise the packed public entrypoint, outside the checkout's module tree.
 // Materialize runtime dependencies and required peers from the locked dev install;
@@ -13,13 +14,16 @@ import { fileURLToPath } from 'node:url';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 assert.equal(process.argv.length, 3, 'Pass the archive produced by yarn pack');
 const archive = resolve(process.argv[2]);
+// Packing has already finished. Extraction must not need shell utilities;
+// the only child process below is Node itself, launched by its absolute path.
+process.env.PATH = '';
 const tempRoot = await realpath(tmpdir());
 const consumer = await mkdtemp(join(tempRoot, 'dframework-consumer-'));
 
 try {
     const installed = join(consumer, 'node_modules', '@durlabh', 'dframework');
     await mkdir(installed, { recursive: true });
-    execFileSync('tar', ['-xzf', archive, '--strip-components=1', '-C', installed]);
+    await extract({ file: archive, cwd: installed, strip: 1, strict: true });
     const manifest = JSON.parse(await readFile(join(installed, 'package.json'), 'utf8'));
     assert.equal(manifest.name, '@durlabh/dframework');
     const providers = {

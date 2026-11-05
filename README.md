@@ -23,6 +23,9 @@ the declared semver range even when they do not use the Got integration. Its
 development copy only supplies the provider for repository tests. Run
 `yarn test:consumer` to pack the library and check adapters in an isolated,
 offline consumer fixture containing only declared required peer providers.
+Archive extraction uses the JavaScript `tar` development dependency, with an
+empty executable search path to verify that no system `tar` utility is needed.
+This dependency supports the test fixture and is not a runtime consumer dependency.
 
 - [API Reference](docs/API_REFERENCE.md) - Complete reference for business objects, filtering, and multi-select columns
 - [Usage Patterns](docs/USAGE_PATTERNS.md) - Comprehensive guide with common usage patterns and examples
