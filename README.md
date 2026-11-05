@@ -4,6 +4,8 @@ This library is to facilate using Spraxa's DFramework related applications via N
 
 ## Documentation
 
+- [Shared configuration, Vault and OTLP logging](docs/RUNTIME_CONFIGURATION.md)
+
 Contributor and coding-agent guidance starts in [AGENTS.md](AGENTS.md).
 See [Contributing](docs/CONTRIBUTING.md) for instruction synchronization and the
 workflow foundation. Validate the projects touched by a change; this library

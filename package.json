@@ -38,7 +38,10 @@
     "./list-parameters": "./lib/list-parameters.js",
     "./reports": "./lib/reports.mjs",
     "./business/query-base": "./lib/business/query-base.mjs",
-    "./enums": "./lib/enums.mjs"
+    "./enums": "./lib/enums.mjs",
+    "./config": "./lib/config.mjs",
+    "./vault": "./lib/vault.mjs",
+    "./logging": "./lib/logging.mjs"
   },
   "peerDependencies": {
     "@azure/identity": "^4.13.0",
@@ -53,8 +56,9 @@
     "mssql": "^12.2.0",
     "mysql2": "^3.22.0",
     "objects-to-csv": "^3.0.0",
-    "pino": "^10.1.1",
+    "pino": "^10.4.0",
     "pino-abstract-transport": "^3.0.0",
+    "pino-opentelemetry-transport": "^4.0.2",
     "pino-pretty": "^13.1.3",
     "pino-roll": "^4.0.0",
     "prompt": "^1.3.0",
@@ -75,8 +79,9 @@
     "mssql": "^12.2.0",
     "mysql2": "^3.22.0",
     "objects-to-csv": "^3.0.0",
-    "pino": "^10.1.1",
+    "pino": "^10.4.0",
     "pino-abstract-transport": "^3.0.0",
+    "pino-opentelemetry-transport": "^4.0.2",
     "pino-pretty": "^13.1.3",
     "pino-roll": "^4.0.0",
     "prompt": "^1.3.0",
@@ -92,6 +97,9 @@
       "optional": true
     },
     "@azure/storage-blob": {
+      "optional": true
+    },
+    "exceljs": {
       "optional": true
     },
     "got": {
@@ -112,6 +120,9 @@
     "objects-to-csv": {
       "optional": true
     },
+    "pino-opentelemetry-transport": {
+      "optional": true
+    },
     "prompt": {
       "optional": true
     },
@@ -122,6 +133,10 @@
   "resolutions": {
     "exceljs/uuid": "11.1.1",
     "@azure/msal-node/uuid": "11.1.1",
-    "exceljs/tmp": "0.2.7"
+    "exceljs/tmp": "0.2.7",
+    "@opentelemetry/api": "1.9.1"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
   }
 }
