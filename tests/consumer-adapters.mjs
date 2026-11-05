@@ -47,6 +47,13 @@ try {
         import { fileURLToPath } from 'node:url';
         import adapters from '@durlabh/dframework/adapters';
 
+        for (const name of ['dayjs', 'exceljs']) {
+            assert.throws(() => import.meta.resolve(name), { code: 'ERR_MODULE_NOT_FOUND' });
+        }
+        for (const name of ['appConfig', 'config', 'vault', 'logging', 'list-parameters']) {
+            await import('@durlabh/dframework/' + name);
+        }
+
         assert.ok(fileURLToPath(import.meta.resolve('semver')).startsWith(
             join(process.cwd(), 'node_modules', 'semver') + sep
         ), 'semver must come from the isolated consumer, not an ambient install');
@@ -61,7 +68,7 @@ try {
         assert.equal(requests[0].http2, true, 'supported Node defaults to HTTP/2');
         await adapter.getJson({ url: 'https://fixture.invalid', http2: false });
         assert.equal(requests[1].http2, false, 'explicit HTTP/2 override is preserved');
-        console.log('Packed adapters import and Got defaults pass with required peers only.');
+        console.log('Packed adapters and lightweight subpaths import without optional peers.');
     `);
     const output = execFileSync(process.execPath, [join(consumer, 'verify.mjs')], {
         cwd: consumer,

@@ -69,10 +69,17 @@ the existing Basic auth and `stream-name` header. No secret rewrite is needed.
 
 The framework logger supports `logging.otherConfig.otelConfig` or
 `otelConfigPath` (a Vault path/reference). It awaits that lookup before creating
-workers. A failed logging-secret lookup disables remote logging and keeps local
-logging. Existing `httpConfig` integrations remain available when OTLP is absent;
+workers. A failed logging-secret lookup (including `OTEL_*` Vault references)
+disables remote logging and keeps local logging. Custom logger integrations must
+check the boolean returned by `prepareLoggingConfig()` and skip remote transports
+when it is false. Environment values are left unchanged on a failed expansion;
+unresolved references must never be passed to a transport worker.
+Existing `httpConfig` integrations remain available when OTLP is absent;
 OTLP takes precedence to avoid duplicate exports.
 
-ExcelJS is now an optional report integration. Apps using only these subpaths
-need not install it; apps importing reports or the root entrypoint still provide
-their existing integration peers. Existing public APIs remain unchanged.
+Day.js and ExcelJS are optional peers for selective subpath consumers. Apps using
+only `appConfig`, `config`, `vault`, `logging` and `list-parameters` need neither.
+The root entrypoint eagerly imports utilities and reports: root/report consumers
+must still provide their integration peers, including Day.js, ExcelJS and fs-extra.
+Optional peer metadata does not make these imports lazy. Existing public APIs
+remain unchanged.
