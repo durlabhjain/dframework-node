@@ -12,7 +12,7 @@ Follow [.github/copilot-instructions.md](.github/copilot-instructions.md) for pr
   with `git pull --ff-only`, then use a dedicated branch/worktree. Preserve dirty work.
 - This is an ES module package (`@durlabh/dframework`) with `yarn.lock`, no npm
   test script, and no root `.agents/skills` directory at the time of verification.
-- Use the pinned Yarn Classic 1.22.22 installer and commit `yarn.lock`. Setup and CI use `yarn install --frozen-lockfile --ignore-scripts`; intentional dependency updates use `yarn install --ignore-scripts` and commit the manifest and lock together. Do not add a second npm lockfile. Runtime peer packages are installed as development dependencies for tests and belong in the scanner inventory; consumers resolve their own runtime graph.
+- Use the pinned Yarn 4.18.1 installer and commit `yarn.lock`. Setup and CI use `yarn install --immutable`; intentional dependency updates use `yarn install` with dependency scripts disabled by `.yarnrc.yml` and commit the manifest and lock together. Do not add a second npm lockfile. Runtime peer packages are installed as development dependencies for tests and belong in the scanner inventory; consumers resolve their own runtime graph.
 - Verified runtime: Node v24.21.0. The project already has installed dependencies.
   An isolated Windows worktree can use a local `node_modules` junction to the
   checkout's installed dependencies; keep the junction untracked and avoid

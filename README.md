@@ -4,9 +4,9 @@ This library is to facilate using Spraxa's DFramework related applications via N
 
 ## Documentation
 
-Use Yarn Classic 1.22.22, pinned in `package.json`, with the committed `yarn.lock`.
-Install with `yarn install --frozen-lockfile --ignore-scripts`. For an intentional
-dependency update, use `yarn install --ignore-scripts` and commit the manifest and
+Use Yarn 4.18.1, pinned in `package.json`, with the committed `yarn.lock`.
+Install with `yarn install --immutable`. For an intentional
+dependency update, use `yarn install` with `.yarnrc.yml` keeping dependency scripts disabled and commit the manifest and
 lock together. Keep one installer's lockfile; runtime peers are also installed as
 development dependencies for local tests, and consumers maintain their own locks.
 The dependency workflow checks a frozen install, offline dependency behavior and

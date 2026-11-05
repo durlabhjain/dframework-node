@@ -8,6 +8,7 @@ on:
       - 'package.json'
       - 'yarn.lock'
       - '.npmrc'
+      - '.yarnrc.yml'
       - 'tests/dependency-security.test.mjs'
       - '.github/workflows/dependency-lockfile.yml'
   workflow_dispatch:
@@ -20,11 +21,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: voidzero-dev/setup-vp@v1.21.2
         with:
+          version: '1.4.0'
           node-version: '24.21.0'
+          run-install: false
       - name: Install committed dependencies
-        run: npx --yes --package=yarn@1.22.22 -- yarn install --frozen-lockfile --ignore-scripts
+        run: yarn install --immutable
       - name: Check offline dependency behavior
         run: node --test --test-concurrency=1 tests/dependency-security.test.mjs
       - name: Check exports
