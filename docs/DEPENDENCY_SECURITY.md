@@ -1,5 +1,11 @@
 # Dependency security and Yarn 4 - 2026-11-05
 
+The exported adapters entrypoint imports semver unconditionally through GotAdapter.
+It is a required peer, with a separate development provider for repository tests;
+consumers must provide the declared range. The offline packed-consumer regression
+supplies only declared required peers and verifies adapter imports and HTTP/2
+defaults, without access to the checkout's development or optional peer packages.
+
 Yarn 4.18.1 replaces Yarn Classic with a committed modern yarn.lock. The node-modules linker creates a local node_modules directory, which remains ignored by Git; dependency scripts are disabled and a one-day package-age gate applies. No Git repositories are approved because this source project has no Git dependencies. Scoped modern resolutions pin UUID 11.1.1 for ExcelJS/MSAL and tmp exactly 0.2.7 for ExcelJS; npm-only overrides and Classic glob resolution syntax are removed. The earlier compatible lock refresh also patches lodash, fast-xml-parser, jws, fast-copy, brace-expansion and minimatch.
 
 objects-to-csv 3 removes the old parsing chain. Its asynchronous API is retained; formula-like strings receive an apostrophe, while numeric types remain numeric. Tests exercise the actual framework CSV response, XLSX comments/read-write and MSAL GUID creation. Review machine-only CSV consumers when adopting the updated peer. Runtime peers remain installed as development copies for tests, including explicit semver and Node type providers; their dev flag does not remove application runtime exposure.

@@ -17,6 +17,13 @@ development dependencies for local tests, and consumers maintain their own locks
 The dependency workflow checks a frozen install, offline dependency behavior and
 exports without starting shared services.
 
+`semver` is a required runtime peer: the public adapters entrypoint eagerly
+imports GotAdapter, which uses it for HTTP/2 defaults. Consumers must provide
+the declared semver range even when they do not use the Got integration. Its
+development copy only supplies the provider for repository tests. Run
+`yarn test:consumer` to pack the library and check adapters in an isolated,
+offline consumer fixture containing only declared required peer providers.
+
 - [API Reference](docs/API_REFERENCE.md) - Complete reference for business objects, filtering, and multi-select columns
 - [Usage Patterns](docs/USAGE_PATTERNS.md) - Comprehensive guide with common usage patterns and examples
 - [Database Configuration](docs/DATABASE_CONFIGURATION.md) - Connection pooling, best practices, and configuration examples

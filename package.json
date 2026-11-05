@@ -6,6 +6,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
+    "test:consumer": "yarn pack --out .yarn/consumer-package.tgz && node tests/consumer-adapters.mjs .yarn/consumer-package.tgz",
     "instructions:sync": "node scripts/sync-agent-instructions.mjs",
     "instructions:check": "node scripts/sync-agent-instructions.mjs --check"
   },
@@ -111,9 +112,6 @@
       "optional": true
     },
     "prompt": {
-      "optional": true
-    },
-    "semver": {
       "optional": true
     },
     "tough-cookie": {
