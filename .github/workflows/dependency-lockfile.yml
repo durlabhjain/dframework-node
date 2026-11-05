@@ -42,6 +42,8 @@ jobs:
         run: yarn instructions:check
       - name: Check offline dependency behavior
         run: node --test --test-concurrency=1 tests/dependency-security.test.mjs
+      - name: Check shared configuration and OTLP transport
+        run: node --test --test-concurrency=1 tests/runtime-config.test.mjs tests/telemetry.test.mjs
       - name: Check exports
         run: node tests/verify-exports.mjs
       - name: Check packed consumer adapters with required peers only

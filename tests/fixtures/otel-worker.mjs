@@ -1,0 +1,10 @@
+import pino from 'pino';
+import { once } from 'node:events';
+const transport = pino.transport({ targets: [JSON.parse(process.env.RUNTIME_TARGET)] });
+const logger = pino({ redact: ['password'] }, transport);
+await once(transport, 'ready');
+transport.ref();
+logger.error({ clientId: 'device', password: 'do-not-export' }, 'probe');
+const closed = once(transport, 'close');
+transport.end();
+await closed;
