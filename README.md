@@ -4,6 +4,11 @@ This library is to facilate using Spraxa's DFramework related applications via N
 
 ## Documentation
 
+Contributor and coding-agent guidance starts in [AGENTS.md](AGENTS.md).
+See [Contributing](docs/CONTRIBUTING.md) for instruction synchronization and the
+workflow foundation. Validate the projects touched by a change; this library
+does not require a compile step or downstream application builds.
+
 Use Yarn 4.18.1, pinned in `package.json`, with the committed `yarn.lock`.
 Install with `yarn install --immutable`. For an intentional
 dependency update, use `yarn install` with `.yarnrc.yml` keeping dependency scripts disabled and commit the manifest and

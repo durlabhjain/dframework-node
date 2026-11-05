@@ -1,0 +1,29 @@
+name: Set up immutable Yarn dependencies
+description: Set up the pinned toolchain, verify the package manager, and install the committed lockfile.
+inputs:
+  node-version:
+    description: Node version supported by the calling project
+    default: '24.21.0'
+  vp-version:
+    description: Vite+ version providing the package-manager shim
+    default: '1.4.0'
+runs:
+  using: composite
+  steps:
+    - uses: voidzero-dev/setup-vp@68f39c78aaf39be468cabd2afb09c162574c84af # v1.21.2
+      with:
+        version: ${{ inputs.vp-version }}
+        node-version: ${{ inputs.node-version }}
+        run-install: false
+    - name: Verify pinned Yarn version
+      shell: bash
+      run: |
+        expected="$(node -p "JSON.parse(require('node:fs').readFileSync('package.json', 'utf8')).packageManager")"
+        actual="yarn@$(yarn --version)"
+        if [ "$actual" != "$expected" ]; then
+          echo "Expected $expected; got $actual" >&2
+          exit 1
+        fi
+    - name: Install committed dependencies
+      shell: bash
+      run: yarn install --immutable

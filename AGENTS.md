@@ -1,61 +1,76 @@
-# DFramework-Node working notes
+# dframework-node contributor instructions
 
-Follow [.github/copilot-instructions.md](.github/copilot-instructions.md) for project conventions.
+`AGENTS.md` is the canonical repository-wide guidance for coding agents and
+contributors. Edit that source; `CLAUDE.md` imports it and Copilot's copies are
+generated. Scoped guidance lives in `lib/AGENTS.md` and `tests/AGENTS.md`.
 
-## Checkout and setup
+## Scope and working process
 
-- The Windows project checkout is `D:\durlabh\dframework-node`, remote
-  `https://github.com/durlabhjain/dframework-node`. Remote default is `main`;
-  a plain `dev` branch was absent when verified for #68667. Confirm the requested
-  base with the user if it differs; never substitute a base silently.
-- Check status and existing branches/PRs before work. Update the approved base
-  with `git pull --ff-only`, then use a dedicated branch/worktree. Preserve dirty work.
-- This is an ES module package (`@durlabh/dframework`) with `yarn.lock`, no npm
-  test script, and no root `.agents/skills` directory at the time of verification.
-- Use the pinned Yarn 4.18.1 installer and commit `yarn.lock`. Setup and CI use `yarn install --immutable`; intentional dependency updates use `yarn install` with dependency scripts disabled by `.yarnrc.yml` and commit the manifest and lock together. Do not add a second npm lockfile. Runtime peer packages are installed as development dependencies for tests and belong in the scanner inventory; consumers resolve their own runtime graph.
-- Verified runtime: Node v24.21.0. The project already has installed dependencies.
-  An isolated Windows worktree can use a local `node_modules` junction to the
-  checkout's installed dependencies; keep the junction untracked and avoid
-  running package installation through it.
+- This is `@durlabh/dframework`, an ES module Node.js library. Its default branch
+  is `main`; confirm a different requested base rather than substituting one.
+- Inspect status, existing branches and PRs before changing files. Preserve
+  unrelated work and use a dedicated branch/worktree. Update an approved base
+  with `git pull --ff-only`; do not reset or overwrite a dirty checkout.
+- Make targeted changes, match surrounding code, preserve public APIs and
+  optional-peer behavior, and update affected documentation/JSDoc.
+- Validate only the projects and behavior touched by the change. This repository
+  has no compile/build step: do not invent one or build downstream applications.
+  Documentation/instruction changes need instruction checks; workflow changes
+  also need workflow validation and the checks they run. Runtime changes need
+  relevant offline tests and export verification; expand coverage when failures
+  or shared-code changes justify it.
+- Do not merge, publish a package, deploy, or connect tests to shared services
+  unless the user explicitly authorizes that action. A draft PR is reviewable work.
 
-## Tests
+## Toolchain and dependencies
 
-Run from the worktree root. Tests read `config.json` / `config.local.json` from
-the current directory, so avoid bringing production configuration into a test run.
+- Use CI's Node 24.21.0 and Yarn 4.18.1 (pinned in `package.json`). Install with
+  `yarn install --immutable`; commit `yarn.lock` and keep one installer's lockfile.
+- Intentional dependency updates use `yarn install`; commit the manifest and
+  lock together. Keep dependency scripts disabled in `.yarnrc.yml`, its age gate
+  and Git-source restrictions, and the fallback `.npmrc` script restriction.
+  Do not bypass these controls to make an installation pass.
+- Runtime peers also appear in `devDependencies` for local tests. Include them
+  in dependency inventories; consumers resolve and lock their own runtime graph.
+- Do not install through a `node_modules` junction shared with another checkout.
+  Dependencies may be shared read-only for isolated checks, never mutated there.
 
-```powershell
-node --test --test-concurrency=1 tests/business-base-pagination.test.js tests/business-base-list-filters.test.js tests/business-base-orderby.test.js
+## Code conventions
 
-$unitTests = Get-ChildItem tests -File | Where-Object {
-    $_.Name -match '\.test\.(js|mjs)$' -and
-    (Select-String -LiteralPath $_.FullName -Pattern 'node:test' -Quiet)
-} | ForEach-Object { $_.FullName }
-node --test --test-concurrency=1 @unitTests
+- Use ES modules and explicit `.js`/`.mjs` import extensions. Follow surrounding
+  export patterns: default exports for primary classes, named exports for utilities.
+- Prefer async/await and meaningful errors; follow existing error-mapping and
+  callback contracts rather than rewriting unrelated code.
+- Use PascalCase classes, camelCase functions, existing constant/file naming,
+  Pino logging through `lib/logger.js`, and the established dayjs date formats.
+- Preserve existing fluent interfaces, flexible arguments, defaults and public
+  signatures. Check optional dependencies before using optional integrations.
+
+## Validation commands
+
+Run from the repository root, using safe local configuration. Additional test
+selection, baseline failures and service exclusions are in `tests/AGENTS.md`.
+
+```text
+yarn instructions:check
+node --test --test-concurrency=1 tests/dependency-security.test.mjs
 node tests/verify-exports.mjs
 ```
 
-- Use sequential test processes: parallel runs can race on Pino's rotating-log
-  symlinks on Windows and exceed available memory. Logs are ignored by Git.
-- Some tests are standalone assertion scripts, not `node:test` files. Run them
-  directly with `node`. `auth.test.js` requires external endpoint credentials;
-  `min-max.test.js` uses Jest-style globals. Neither belongs in the command above.
-- Baseline on `main` at `d864e45`: `node:test` had two failures in
-  `sql-log-format.test.js` (undefined `invalidLogLevelLogger` and a Unicode
-  string literal expectation). Standalone
-  `where-type.test.js` had one type-inference expectation failure.
-  Reproduce baseline failures before attributing them to a change.
-- Pagination tests use actual MSSQL/MySQL query builders and `runQuery`, with
-  mocked driver calls. They do **not** establish live database integration coverage.
+Do not silently treat known baseline failures as successful tests; reproduce and
+report them separately. Mocked drivers do not establish live integration coverage.
 
-## Pagination contract
+## Instruction and workflow maintenance
 
-- `BusinessBase.list()` is shared by the MSSQL `Sql` and `Mysql` database adapters.
-  `lib/adapters/` contains HTTP/search adapters, not SQL pagination implementations.
-- With `returnCount` and a positive limit, count first; confirmed zero totals skip
-  the data and supplemental row-group queries. Keep list hooks and response shape.
-- Preserve count value types, nonzero paging, parameter bindings, CTEs and existing
-  first-group count semantics. Empty grouped counts represent zero matching groups.
-- Expand hook IN-list placeholders before deriving count/data statements, and bind
-  each parameter once on the shared request. Without a count, still execute data.
-- Elastic search returns totals and hits in one response; it has no separate
-  count-followed-by-data query to short-circuit.
+- `yarn instructions:sync` regenerates regular Claude bridges and Copilot files
+  from the root/scoped sources. `yarn instructions:check` detects missing or stale
+  generated files without writing. Do not hand-edit generated copies or symlink
+  them: regular files support Windows clones without symlink privileges.
+- Add a scope to `scripts/sync-agent-instructions.mjs` when introducing another
+  scoped `AGENTS.md`; keep the generated files committed with their source.
+- `.github/actions/setup-yarn/action.yml` is the local workflow foundation:
+  pinned toolchain, package-manager verification and immutable installation.
+  Quality jobs use read-only permissions; do not add release secrets or write
+  permissions to shared setup. Keep publishing/deployment workflows separate.
+- See `docs/CONTRIBUTING.md` for the instruction layout, project map and links to
+  API, usage, configuration, logging, export and report documentation.

@@ -5,6 +5,10 @@
   "main": "index.js",
   "license": "MIT",
   "type": "module",
+  "scripts": {
+    "instructions:sync": "node scripts/sync-agent-instructions.mjs",
+    "instructions:check": "node scripts/sync-agent-instructions.mjs --check"
+  },
   "exports": {
     ".": "./index.js",
     "./mssql": "./lib/wrappers/mssql.js",

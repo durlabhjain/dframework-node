@@ -10,24 +10,35 @@ on:
       - '.npmrc'
       - '.yarnrc.yml'
       - 'tests/dependency-security.test.mjs'
+      - 'AGENTS.md'
+      - 'CLAUDE.md'
+      - 'lib/AGENTS.md'
+      - 'lib/CLAUDE.md'
+      - 'tests/AGENTS.md'
+      - 'tests/CLAUDE.md'
+      - 'scripts/sync-agent-instructions.mjs'
+      - '.github/copilot-instructions.md'
+      - '.github/instructions/**'
+      - '.github/actions/setup-yarn/**'
       - '.github/workflows/dependency-lockfile.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: dependency-lockfile-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   dependencies:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: voidzero-dev/setup-vp@v1.21.2
-        with:
-          version: '1.4.0'
-          node-version: '24.21.0'
-          run-install: false
-      - name: Install committed dependencies
-        run: yarn install --immutable
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: ./.github/actions/setup-yarn
+      - name: Check generated agent instructions
+        run: yarn instructions:check
       - name: Check offline dependency behavior
         run: node --test --test-concurrency=1 tests/dependency-security.test.mjs
       - name: Check exports
