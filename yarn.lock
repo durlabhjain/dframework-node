@@ -331,7 +331,11 @@ __metadata:
       optional: true
     "@azure/storage-blob":
       optional: true
+    dayjs:
+      optional: true
     exceljs:
+      optional: true
+    fs-extra:
       optional: true
     got:
       optional: true
@@ -344,6 +348,8 @@ __metadata:
     mysql2:
       optional: true
     objects-to-csv:
+      optional: true
+    pino-abstract-transport:
       optional: true
     pino-opentelemetry-transport:
       optional: true

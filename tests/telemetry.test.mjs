@@ -24,6 +24,14 @@ test('a logging secret failure leaves local logging available', async () => {
     assert.equal(warnings.length, 1);
     assert.doesNotMatch(warnings[0], /secret value/);
 });
+test('legacy logging path aliases and already-expanded dictionaries remain usable', async () => {
+    for (const key of ['httpConfigPath', 'otelConfigPath']) {
+        const config = { logging: { otherConfig: { [key]: 'existing-path' } } };
+        const secret = { endpoint: 'http://collector.test/v1/logs' };
+        await prepareLoggingConfig({ config, env: {}, resolver: { async resolveEnvironmentSecrets() {}, async getSecret(path) { assert.equal(path, 'existing-path'); return secret; } } });
+        assert.deepEqual(config.logging.otherConfig.otelConfig, secret);
+    }
+});
 for (const legacy of [false, true]) {
     test(`real Pino worker flushes ${legacy ? 'existing OpenObserve secret' : 'OTLP configuration'} as OTLP with redaction`, { timeout: 15000 }, async t => {
         const requests = [];
