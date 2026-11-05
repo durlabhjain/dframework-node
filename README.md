@@ -4,6 +4,29 @@ This library is to facilate using Spraxa's DFramework related applications via N
 
 ## Documentation
 
+Contributor and coding-agent guidance starts in [AGENTS.md](AGENTS.md).
+See [Contributing](docs/CONTRIBUTING.md) for instruction synchronization and the
+workflow foundation. Validate the projects touched by a change; this library
+does not require a compile step or downstream application builds.
+
+Use Yarn 4.18.1, pinned in `package.json`, with the committed `yarn.lock`.
+Install with `yarn install --immutable`. For an intentional
+dependency update, use `yarn install` with `.yarnrc.yml` keeping dependency scripts disabled and commit the manifest and
+lock together. Keep one installer's lockfile; runtime peers are also installed as
+development dependencies for local tests, and consumers maintain their own locks.
+The dependency workflow checks a frozen install, offline dependency behavior and
+exports without starting shared services.
+
+`semver` is a required runtime peer: the public adapters entrypoint eagerly
+imports GotAdapter, which uses it for HTTP/2 defaults. Consumers must provide
+the declared semver range even when they do not use the Got integration. Its
+development copy only supplies the provider for repository tests. Run
+`yarn test:consumer` to pack the library and check adapters in an isolated,
+offline consumer fixture containing only declared required peer providers.
+Archive extraction uses the JavaScript `tar` development dependency, with an
+empty executable search path to verify that no system `tar` utility is needed.
+This dependency supports the test fixture and is not a runtime consumer dependency.
+
 - [API Reference](docs/API_REFERENCE.md) - Complete reference for business objects, filtering, and multi-select columns
 - [Usage Patterns](docs/USAGE_PATTERNS.md) - Comprehensive guide with common usage patterns and examples
 - [Database Configuration](docs/DATABASE_CONFIGURATION.md) - Connection pooling, best practices, and configuration examples

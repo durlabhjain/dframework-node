@@ -6,3 +6,6 @@ node_modules
 package-lock.json
 logs/
 audit.json
+
+.yarn/
+.pnp.*

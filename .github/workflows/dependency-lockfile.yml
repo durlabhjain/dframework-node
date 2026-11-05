@@ -1,0 +1,50 @@
+name: Dependency Lockfile
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    paths:
+      - 'package.json'
+      - 'yarn.lock'
+      - '.npmrc'
+      - '.yarnrc.yml'
+      - 'tests/dependency-security.test.mjs'
+      - 'tests/consumer-adapters.mjs'
+      - 'AGENTS.md'
+      - 'CLAUDE.md'
+      - 'lib/AGENTS.md'
+      - 'lib/CLAUDE.md'
+      - 'tests/AGENTS.md'
+      - 'tests/CLAUDE.md'
+      - 'scripts/sync-agent-instructions.mjs'
+      - '.github/copilot-instructions.md'
+      - '.github/instructions/**'
+      - '.github/actions/setup-yarn/**'
+      - '.github/workflows/dependency-lockfile.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-lockfile-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dependencies:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: ./.github/actions/setup-yarn
+      - name: Check generated agent instructions
+        run: yarn instructions:check
+      - name: Check offline dependency behavior
+        run: node --test --test-concurrency=1 tests/dependency-security.test.mjs
+      - name: Check exports
+        run: node tests/verify-exports.mjs
+      - name: Check packed consumer adapters with required peers only
+        run: yarn test:consumer
+      - name: Verify lockfile is unchanged
+        run: git diff --exit-code -- yarn.lock
