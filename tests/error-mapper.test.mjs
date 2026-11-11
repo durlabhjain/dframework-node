@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { ErrorMapper, mapDatabaseError, getDuplicateKeyObject } from '../lib/business/error-mapper.mjs';
+import { ErrorMapper, sqlErrorMapper, mapDatabaseError, getDuplicateKeyObject } from '../lib/business/error-mapper.mjs';
 import BusinessBase from '../lib/business/business-base.mjs';
 
 const GENERIC = 'A record with the same value already exists.';
@@ -171,4 +171,41 @@ test('BusinessBase.mapDatabaseError reads duplicateKeyMessages off the instance'
 test('a business object with no duplicateKeyMessages still never leaks a db object name', () => {
     const plain = new (class extends BusinessBase { })();
     assert.ok(!DB_OBJECT_NAME.test(plain.mapDatabaseError(duplicateKeyError('IX_Unknown'))));
+});
+
+// --- application registration -----------------------------------------------------------------
+
+test('register() adds app-wide duplicate-key messages, checked after the caller and before mappings', () => {
+    const mapper = new ErrorMapper({ file: false }).register({
+        duplicateKeyMessages: { IX_Widget_Name_ClientId: 'Widget Name', UQ_Widget_Code: { message: 'Code is taken.' } }
+    });
+    assert.equal(mapper.map(duplicateKeyError('IX_Widget_Name_ClientId')), 'Widget Name already exists. Please use a different name.');
+    assert.equal(mapper.map(UNIQUE_KEY_ERROR('UQ_Widget_Code')), 'Code is taken.');
+    assert.equal(
+        mapper.map(duplicateKeyError('IX_Widget_Name_ClientId'), { duplicateKeyMessages: { IX_Widget_Name_ClientId: 'Name' } }),
+        'Name already exists. Please use a different name.',
+        'a business object overrides the app-wide label'
+    );
+    assert.equal(mapper.map(duplicateKeyError('IX_Not_Registered')), GENERIC, 'unregistered duplicate keys are generic without any file');
+});
+
+test('register() adds regex mappings ahead of the file and a custom generic message', () => {
+    const mapper = new ErrorMapper({ file }).register({
+        mappings: [{ pattern: 'conflicted with the FOREIGN KEY constraint', description: 'The selected item no longer exists.' }],
+        genericMessage: 'Already exists.'
+    });
+    assert.equal(mapper.map('The INSERT statement conflicted with the FOREIGN KEY constraint "FK_A_B".'), 'The selected item no longer exists.');
+    assert.equal(mapper.map(duplicateKeyError('IX_UserGroup_GroupName_ClientId')), 'Group Name already exists. Please use a different name.', 'file mappings still apply');
+    assert.equal(mapper.map(duplicateKeyError('IX_Unmapped')), 'Already exists.');
+});
+
+test('register() rejects a name that is not a database object name', () => {
+    assert.throws(() => new ErrorMapper({ file: false }).register({ duplicateKeyMessages: { "IX_Bad'; DROP": 'x' } }), /Invalid duplicateKeyMessages key/);
+});
+
+test('the shared mapper accepts registrations used by mapDatabaseError and BusinessBase', () => {
+    sqlErrorMapper.register({ duplicateKeyMessages: { IX_Registered_Globally: 'Global Name' } });
+    assert.equal(mapDatabaseError(duplicateKeyError('IX_Registered_Globally')), 'Global Name already exists. Please use a different name.');
+    const plain = new (class extends BusinessBase { })();
+    assert.equal(plain.mapDatabaseError(duplicateKeyError('IX_Registered_Globally')), 'Global Name already exists. Please use a different name.');
 });
