@@ -89,6 +89,15 @@ ingest function running `del(.dropped_attributes_count)`.
 the OTLP export, the local files and the console alike. An invalid path fails logger
 creation and names itself rather than silently keeping the field.
 
+## HTTP request logging
+
+`@durlabh/dframework/middleware/http-logger` exports `createHttpLogger({ logger, ...pinoHttpOptions })`,
+a `pino-http` middleware with the framework's request shape (`id`, `method`, `url`, `query`,
+raw `queryString`, `params`, `body`, `userAgent`, `remoteAddress`, `referrer`) and a
+`x-request-id` or random request id. Pass any `pino-http` option, such as `customProps`,
+`genReqId` or `autoLogging`, to override a default; `serializers` merge per key.
+`pino-http` is an optional peer dependency.
+
 Day.js and ExcelJS are optional peers for selective subpath consumers. Apps using
 only `appConfig`, `config`, `vault`, `logging` and `list-parameters` need neither.
 The root entrypoint eagerly imports utilities and reports: root/report consumers
