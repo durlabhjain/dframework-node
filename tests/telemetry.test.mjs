@@ -8,20 +8,13 @@ import { fileURLToPath } from 'node:url';
 import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { applyResourceDetectors, createOtelTarget, createRedactOptions, normalizeFileConfig, prepareLoggingConfig } from '../lib/logging.mjs';
+import { createOtelTarget, createRedactOptions, normalizeFileConfig, prepareLoggingConfig } from '../lib/logging.mjs';
 
 test('telemetry is opt-in and standard environment settings keep their precedence', () => {
     assert.equal(createOtelTarget({ env: {} }), null);
     const target = createOtelTarget({ env: { OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: 'http://localhost/v1/logs', OTEL_SERVICE_NAME: 'test' }, serviceName: 'fixture', config: { invalid: true } });
     assert.equal(target.target, 'pino-opentelemetry-transport');
     assert.equal(target.options.resourceAttributes['service.name'], 'test');
-    assert.equal(target.options.resourceAttributes['process.pid'], process.pid);
-});
-test('detectors stay trimmed unless configuration or the standard variable widens them', () => {
-    const env = {};
-    assert.equal(applyResourceDetectors({ env }), 'env,serviceinstance');
-    assert.equal(applyResourceDetectors({ env, detectors: 'all' }), 'env,serviceinstance');
-    assert.equal(applyResourceDetectors({ env: {}, detectors: ['env', 'host'] }), 'env,host');
 });
 test('ignored fields become removing redaction, and no configuration leaves records untouched', () => {
     assert.deepEqual(createRedactOptions(['query', 'err.originalError.stack']), { paths: ['query', 'err.originalError.stack'], remove: true });
@@ -120,7 +113,7 @@ for (const legacy of [false, true]) {
     });
 }
 
-test('the framework logger applies configured ignoreFields and detector selection', { timeout: 15000 }, async t => {
+test('the framework logger applies configured ignoreFields', { timeout: 15000 }, async t => {
     const requests = [];
     const server = http.createServer(async (req, res) => {
         let body = ''; for await (const chunk of req) body += chunk;
@@ -145,6 +138,4 @@ test('the framework logger applies configured ignoreFields and detector selectio
     assert.match(requests[0], /SQL query failed/);
     assert.match(requests[0], /SELECT 1/);
     assert.doesNotMatch(requests[0], /nested-detail/);
-    assert.match(requests[0], /host\.name/);
-    assert.doesNotMatch(requests[0], /process\.command|host\.arch|os\.type/);
 });

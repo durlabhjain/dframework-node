@@ -255,9 +255,7 @@ test('createQueryLogger preserves raw SQL formatting for mysql dialect', async (
     });
     assert.strictEqual(calls.length, 1);
     assert.strictEqual(calls[0][0].dialect, 'mysql');
-    assert.strictEqual(calls[0][0].query, 'SELECT * FROM users WHERE id = :id');
-    // mysql SQL is never reformatted, so there is no formatted copy worth logging.
-    assert.ok(!('formattedQuery' in calls[0][0]));
+    assert.strictEqual(calls[0][0].formattedQuery, 'SELECT * FROM users WHERE id = :id');
     assert.ok(!calls[0][1].includes('DECLARE @'));
 });
 
@@ -315,8 +313,7 @@ test('structured logs summarize TVPs and keep mysql slow-query SQL raw', () => {
         }
 
         assert.strictEqual(warnCalls[0][0].dialect, 'mysql');
-        assert.strictEqual(warnCalls[0][0].query, 'SELECT * FROM users WHERE id = :id');
-        assert.ok(!('formattedQuery' in warnCalls[0][0]));
+        assert.strictEqual(warnCalls[0][0].formattedQuery, 'SELECT * FROM users WHERE id = :id');
         assert.ok(!warnCalls[0][1].includes('DECLARE @'));
     });
 });

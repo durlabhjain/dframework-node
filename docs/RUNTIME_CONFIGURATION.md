@@ -79,18 +79,9 @@ OTLP takes precedence to avoid duplicate exports.
 
 ## Keeping exported records small
 
-A collector copies resource attributes onto every record, so
-`logging.otherConfig.resourceDetectors` selects the detectors the transport worker
-runs. The default `env,serviceinstance` keeps `service.name`, `service.instance.id`,
-`host.name` and `process.pid`, leaving out `host.arch`, `host.id`, `os.*` and
-`process.*`; the process detector runs inside the Pino worker, so `process.command`
-names that worker rather than the application. Use `all` for full detection or any
-comma separated subset, and `OTEL_NODE_RESOURCE_DETECTORS` overrides it.
-
-`dropped_attributes_count` and `instrumentation_library_name` belong to the OTLP
-envelope rather than to a record: the transformer always writes the dropped-attribute
-counters, and a blank instrumentation scope name falls back to the SDK default. Neither
-option here removes them, so drop them at the collector, for example with an OpenObserve
+Resource attributes (`host.*`, `os.*`, `process.*`), `dropped_attributes_count` and
+`instrumentation_library_name` belong to the OTLP envelope rather than to a record.
+Drop them at the collector, for example with an OpenObserve
 ingest function running `del(.dropped_attributes_count)`.
 
 `logging.otherConfig.ignoreFields` drops payload fields by Pino redaction path
