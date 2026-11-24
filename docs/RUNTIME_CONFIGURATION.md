@@ -89,6 +89,13 @@ ingest function running `del(.dropped_attributes_count)`.
 the OTLP export, the local files and the console alike. An invalid path fails logger
 creation and names itself rather than silently keeping the field.
 
+## SQL errors
+
+The SQL adapters log a failed query with its query and parameters and return
+`{ success: false, err }`; `BusinessBase.save` even turns `err` into a message string, so these
+errors often never reach a global error handler. A handler that does receive one can skip logging
+it again with `isDatabaseError(err)` from `@durlabh/dframework/sql`.
+
 ## HTTP request logging
 
 `@durlabh/dframework/middleware/http-logger` exports `createHttpLogger({ logger, ...pinoHttpOptions })`,

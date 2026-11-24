@@ -346,3 +346,11 @@ test('summarizeParametersForLog uses descriptor name and JSON-safe scalar values
         assert.strictEqual(calls[0][0].parameters.Circular.value.self, '[Circular]');
     });
 });
+
+test('isDatabaseError recognises driver errors only', async () => {
+    const { isDatabaseError } = await import('../lib/sql.js');
+    assert.ok(isDatabaseError(new mssql.RequestError('boom', 'EREQUEST')));
+    assert.ok(isDatabaseError(Object.assign(new Error('boom'), { sqlState: '42S02', sqlMessage: 'no table' })));
+    assert.ok(!isDatabaseError(new Error('boom')));
+    assert.ok(!isDatabaseError(undefined));
+});
