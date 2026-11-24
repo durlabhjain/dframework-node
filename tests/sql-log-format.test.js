@@ -219,14 +219,12 @@ test('slow-query and error log sites use formatted SQL output', async () => {
 
     assert.strictEqual(result.success, false);
     assert.strictEqual(result.err, expectedError);
-    assert.strictEqual(errorCalls.length, 1);
-    assert.strictEqual(errorCalls[0][0].err, expectedError);
-    assert.strictEqual(errorCalls[0][0].type, 'query');
-    assert.strictEqual(errorCalls[0][0].query, query);
-    assert.match(errorCalls[0][0].formattedQuery, /DECLARE @Id INT = 5/);
-    assert.strictEqual(errorCalls[0][0].parameters.Id.value, 5);
-    assert.match(errorCalls[0][1], /SQL query failed/);
-    assert.strictEqual(errorCalls[0][1], 'SQL query failed');
+    // The adapter no longer logs; the caller logs the error once, with this context on it.
+    assert.strictEqual(errorCalls.length, 0);
+    assert.strictEqual(expectedError.type, 'query');
+    assert.strictEqual(expectedError.query, query);
+    assert.match(expectedError.formattedQuery, /DECLARE @Id INT = 5/);
+    assert.strictEqual(expectedError.parameters.Id.value, 5);
 });
 
 test('formatSqlQueryForLog safely handles bigint and unserializable values', () => {
@@ -319,8 +317,7 @@ test('structured logs summarize TVPs and keep mysql slow-query SQL raw', () => {
 });
 
 test('summarizeParametersForLog uses descriptor name and JSON-safe scalar values', () => {
-    const calls = [];
-    const log = { error: (...args) => calls.push(args) };
+    const log = { error: () => { } };
     const sql = new Sql();
     const circular = {};
     circular.self = circular;
@@ -339,10 +336,10 @@ test('summarizeParametersForLog uses descriptor name and JSON-safe scalar values
         },
         type: 'query',
         query: 'SELECT 1'
-    }).then(() => {
-        assert.ok(calls[0][0].parameters.ActualAlias);
-        assert.strictEqual(calls[0][0].parameters.Alias, undefined);
-        assert.strictEqual(calls[0][0].parameters.BigValue.value, '9007199254740993');
-        assert.strictEqual(calls[0][0].parameters.Circular.value.self, '[Circular]');
+    }).then(({ err }) => {
+        assert.ok(err.parameters.ActualAlias);
+        assert.strictEqual(err.parameters.Alias, undefined);
+        assert.strictEqual(err.parameters.BigValue.value, '9007199254740993');
+        assert.strictEqual(err.parameters.Circular.value.self, '[Circular]');
     });
 });

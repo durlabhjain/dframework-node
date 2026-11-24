@@ -89,6 +89,14 @@ ingest function running `del(.dropped_attributes_count)`.
 the OTLP export, the local files and the console alike. An invalid path fails logger
 creation and names itself rather than silently keeping the field.
 
+## SQL errors
+
+The SQL adapters no longer log a failed query. They return `{ success: false, err }` with
+`type`, `query`, `parameters` and `formattedQuery` set on `err`, which Pino serializes with the
+error. Log the error once where it is handled, for example in the global error handler, so the
+entry carries both the request and the query context. Code that swallows `success: false`
+must log the error itself.
+
 ## HTTP request logging
 
 `@durlabh/dframework/middleware/http-logger` exports `createHttpLogger({ logger, ...pinoHttpOptions })`,
