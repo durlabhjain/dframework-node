@@ -8,13 +8,24 @@ import { fileURLToPath } from 'node:url';
 import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { createOtelTarget, normalizeFileConfig, prepareLoggingConfig } from '../lib/logging.mjs';
+import { applyResourceDetectors, createOtelTarget, createRedactOptions, normalizeFileConfig, prepareLoggingConfig } from '../lib/logging.mjs';
 
 test('telemetry is opt-in and standard environment settings keep their precedence', () => {
     assert.equal(createOtelTarget({ env: {} }), null);
     const target = createOtelTarget({ env: { OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: 'http://localhost/v1/logs', OTEL_SERVICE_NAME: 'test' }, serviceName: 'fixture', config: { invalid: true } });
     assert.equal(target.target, 'pino-opentelemetry-transport');
     assert.equal(target.options.resourceAttributes['service.name'], 'test');
+    assert.equal(target.options.resourceAttributes['process.pid'], process.pid);
+});
+test('detectors stay trimmed unless configuration or the standard variable widens them', () => {
+    const env = {};
+    assert.equal(applyResourceDetectors({ env }), 'env,serviceinstance');
+    assert.equal(applyResourceDetectors({ env, detectors: 'all' }), 'env,serviceinstance');
+    assert.equal(applyResourceDetectors({ env: {}, detectors: ['env', 'host'] }), 'env,host');
+});
+test('ignored fields become removing redaction, and no configuration leaves records untouched', () => {
+    assert.deepEqual(createRedactOptions(['query', 'err.originalError.stack']), { paths: ['query', 'err.originalError.stack'], remove: true });
+    assert.equal(createRedactOptions(), undefined);
 });
 test('old file rotation settings have equivalent modern options', () => {
     assert.deepEqual(normalizeFileConfig({ frequency: '24h', max_logs: '10d', date_format: 'YYYY-MM-DD', size: '1m' }), { frequency: 'daily', limit: { count: 10 }, dateFormat: 'yyyy-MM-dd', size: '1m' });
@@ -108,3 +119,32 @@ for (const legacy of [false, true]) {
         assert.doesNotMatch(requests[0].body, /do-not-export/);
     });
 }
+
+test('the framework logger applies configured ignoreFields and detector selection', { timeout: 15000 }, async t => {
+    const requests = [];
+    const server = http.createServer(async (req, res) => {
+        let body = ''; for await (const chunk of req) body += chunk;
+        requests.push(body); res.setHeader('content-type', 'application/json'); res.end('{}');
+    });
+    server.listen(0, '127.0.0.1'); await once(server, 'listening');
+    const cwd = await mkdtemp(join(tmpdir(), 'dframework-logging-filter-'));
+    t.after(async () => {
+        await new Promise(resolve => server.close(resolve));
+        assert.equal(dirname(cwd), tmpdir());
+        await rm(cwd, { recursive: true, force: true });
+    });
+    const endpoint = `http://127.0.0.1:${server.address().port}`;
+    await writeFile(join(cwd, 'config.json'), JSON.stringify({ logging: { otherConfig: {
+        stdout: false,
+        otelConfig: { endpoint: `${endpoint}/v1/logs`, protocol: 'http/json' },
+        ignoreFields: ['err.originalError'],
+    } } }));
+    const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^(OTEL_|VAULT_)/i.test(key)));
+    await promisify(execFile)(process.execPath, [fileURLToPath(new URL('./fixtures/logger-filter-worker.mjs', import.meta.url))], { cwd, env, windowsHide: true, timeout: 10000 });
+    assert.equal(requests.length, 1);
+    assert.match(requests[0], /SQL query failed/);
+    assert.match(requests[0], /SELECT 1/);
+    assert.doesNotMatch(requests[0], /nested-detail/);
+    assert.match(requests[0], /host\.name/);
+    assert.doesNotMatch(requests[0], /process\.command|host\.arch|os\.type/);
+});

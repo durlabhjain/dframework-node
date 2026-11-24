@@ -526,6 +526,8 @@ The framework uses [Pino](https://getpino.io/) v10+ for high-performance, asynch
 - `mixin` (function): Function to add custom properties to all log entries
 - `httpConfig` (object): HTTP endpoint configuration for remote logging
 - `postLevel` (string): Minimum level for HTTP transport (default: 'error')
+- `ignoreFields` (string[]): field paths dropped from every destination, in Pino redaction syntax (`a.b`, `a.*`, `a[0]`), e.g. `["query", "err.originalError.stack"]`
+- `resourceDetectors` (string | string[]): OTel resource detectors the OTLP worker runs (`env`, `host`, `os`, `process`, `serviceinstance`, `all`, `none`); defaults to `env,serviceinstance`. See [runtime configuration](docs/RUNTIME_CONFIGURATION.md)
 
 **httpConfig (remote logging):**
 

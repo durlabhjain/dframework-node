@@ -77,6 +77,27 @@ unresolved references must never be passed to a transport worker.
 Existing `httpConfig` integrations remain available when OTLP is absent;
 OTLP takes precedence to avoid duplicate exports.
 
+## Keeping exported records small
+
+A collector copies resource attributes onto every record, so
+`logging.otherConfig.resourceDetectors` selects the detectors the transport worker
+runs. The default `env,serviceinstance` keeps `service.name`, `service.instance.id`,
+`host.name` and `process.pid`, leaving out `host.arch`, `host.id`, `os.*` and
+`process.*`; the process detector runs inside the Pino worker, so `process.command`
+names that worker rather than the application. Use `all` for full detection or any
+comma separated subset, and `OTEL_NODE_RESOURCE_DETECTORS` overrides it.
+
+`dropped_attributes_count` and `instrumentation_library_name` belong to the OTLP
+envelope rather than to a record: the transformer always writes the dropped-attribute
+counters, and a blank instrumentation scope name falls back to the SDK default. Neither
+option here removes them, so drop them at the collector, for example with an OpenObserve
+ingest function running `del(.dropped_attributes_count)`.
+
+`logging.otherConfig.ignoreFields` drops payload fields by Pino redaction path
+(`query`, `err.originalError.stack`, `parameters`, `req.body.*`), removing them from
+the OTLP export, the local files and the console alike. An invalid path fails logger
+creation and names itself rather than silently keeping the field.
+
 Day.js and ExcelJS are optional peers for selective subpath consumers. Apps using
 only `appConfig`, `config`, `vault`, `logging` and `list-parameters` need neither.
 The root entrypoint eagerly imports utilities and reports: root/report consumers
