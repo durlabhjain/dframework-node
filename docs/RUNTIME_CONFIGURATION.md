@@ -77,6 +77,35 @@ unresolved references must never be passed to a transport worker.
 Existing `httpConfig` integrations remain available when OTLP is absent;
 OTLP takes precedence to avoid duplicate exports.
 
+## Keeping exported records small
+
+Resource attributes (`host.*`, `os.*`, `process.*`), `dropped_attributes_count` and
+`instrumentation_library_name` belong to the OTLP envelope rather than to a record.
+Drop them at the collector, for example with an OpenObserve
+ingest function running `del(.dropped_attributes_count)`.
+
+`logging.otherConfig.ignoreFields` drops payload fields by Pino redaction path
+(`query`, `err.originalError.stack`, `parameters`, `req.body.*`), removing them from
+the OTLP export, the local files and the console alike. An invalid path fails logger
+creation and names itself rather than silently keeping the field.
+
+## SQL errors
+
+The SQL adapters log a failed query with its query and parameters and return
+`{ success: false, err }`; `BusinessBase.save` even turns `err` into a message string, so these
+errors often never reach a global error handler. The adapters mark each error they log, so a handler
+that does receive one can skip logging it again with `isErrorLogged(err)` from `@durlabh/dframework/sql`.
+Driver errors raised elsewhere (connecting, transactions) are not marked and still get logged.
+
+## HTTP request logging
+
+`@durlabh/dframework/middleware/http-logger` exports `createHttpLogger({ logger, ...pinoHttpOptions })`,
+a `pino-http` middleware with the framework's request shape (`id`, `method`, `url`, `query`,
+raw `queryString`, `params`, `body`, `userAgent`, `remoteAddress`, `referrer`) and a
+`x-request-id` or random request id. Pass any `pino-http` option, such as `customProps`,
+`genReqId` or `autoLogging`, to override a default; `serializers` merge per key.
+`pino-http` is an optional peer dependency.
+
 Day.js and ExcelJS are optional peers for selective subpath consumers. Apps using
 only `appConfig`, `config`, `vault`, `logging` and `list-parameters` need neither.
 The root entrypoint eagerly imports utilities and reports: root/report consumers

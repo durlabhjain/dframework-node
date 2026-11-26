@@ -526,6 +526,7 @@ The framework uses [Pino](https://getpino.io/) v10+ for high-performance, asynch
 - `mixin` (function): Function to add custom properties to all log entries
 - `httpConfig` (object): HTTP endpoint configuration for remote logging
 - `postLevel` (string): Minimum level for HTTP transport (default: 'error')
+- `ignoreFields` (string[]): field paths dropped from every destination, in Pino redaction syntax (`a.b`, `a.*`, `a[0]`), e.g. `["query", "err.originalError.stack"]`
 
 **httpConfig (remote logging):**
 

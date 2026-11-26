@@ -346,3 +346,13 @@ test('summarizeParametersForLog uses descriptor name and JSON-safe scalar values
         assert.strictEqual(calls[0][0].parameters.Circular.value.self, '[Circular]');
     });
 });
+
+test('isErrorLogged is true only for errors the adapters marked', async () => {
+    const { isErrorLogged, markErrorLogged } = await import('../lib/sql.js');
+    const err = new mssql.RequestError('boom', 'EREQUEST');
+    assert.ok(!isErrorLogged(err));
+    assert.equal(markErrorLogged(err), err);
+    assert.ok(isErrorLogged(err));
+    assert.ok(!JSON.stringify(err).includes('errorLogged'));
+    assert.ok(!isErrorLogged(undefined));
+});
