@@ -93,8 +93,9 @@ creation and names itself rather than silently keeping the field.
 
 The SQL adapters log a failed query with its query and parameters and return
 `{ success: false, err }`; `BusinessBase.save` even turns `err` into a message string, so these
-errors often never reach a global error handler. A handler that does receive one can skip logging
-it again with `isDatabaseError(err)` from `@durlabh/dframework/sql`.
+errors often never reach a global error handler. The adapters mark each error they log, so a handler
+that does receive one can skip logging it again with `isErrorLogged(err)` from `@durlabh/dframework/sql`.
+Driver errors raised elsewhere (connecting, transactions) are not marked and still get logged.
 
 ## HTTP request logging
 

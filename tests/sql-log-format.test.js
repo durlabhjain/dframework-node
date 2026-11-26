@@ -347,10 +347,12 @@ test('summarizeParametersForLog uses descriptor name and JSON-safe scalar values
     });
 });
 
-test('isDatabaseError recognises driver errors only', async () => {
-    const { isDatabaseError } = await import('../lib/sql.js');
-    assert.ok(isDatabaseError(new mssql.RequestError('boom', 'EREQUEST')));
-    assert.ok(isDatabaseError(Object.assign(new Error('boom'), { sqlState: '42S02', sqlMessage: 'no table' })));
-    assert.ok(!isDatabaseError(new Error('boom')));
-    assert.ok(!isDatabaseError(undefined));
+test('isErrorLogged is true only for errors the adapters marked', async () => {
+    const { isErrorLogged, markErrorLogged } = await import('../lib/sql.js');
+    const err = new mssql.RequestError('boom', 'EREQUEST');
+    assert.ok(!isErrorLogged(err));
+    assert.equal(markErrorLogged(err), err);
+    assert.ok(isErrorLogged(err));
+    assert.ok(!JSON.stringify(err).includes('errorLogged'));
+    assert.ok(!isErrorLogged(undefined));
 });
